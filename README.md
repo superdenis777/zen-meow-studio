@@ -32,7 +32,7 @@ Without the Worker (below), the cats use their built-in scripted replies, so the
 ## How a reply is made
 
 1. **The local engine always runs first.** It picks this turn's layer from the cat's arc (0 Unconditioned Baseline → 1 Somatic Ground → 2 Loop De-escalation → 3 Creative Subversion → 4 Sovereign Choice → 5 Real-Life Release). Signals in your message can jump to a layer: body words go to 1, rumination to 2, feeling stuck to 3, decisions to 4, and goodbyes to 5.
-2. **In LIVE mode**, the page sends `{ prompt, cat, history, lang, layer }` to the Worker. The Worker builds the system prompt from the framework, that cat's persona, and a hint for this turn's layer, then calls `gemini-2.5-flash`.
+2. **In LIVE mode**, the page sends `{ prompt, cat, history, lang, layer }` to the Worker. The Worker builds the system prompt from the framework, that cat's persona, and a hint for this turn's layer, then calls `gemini-3.8-flash` (change it with the `GEMINI_MODEL` variable).
 3. **If the Worker is down, slow (9 s), rate-limited, or returns nothing**, the scripted line from step 1 is used. The page then waits 1–2 minutes before trying the Worker again. The taskbar light shows the state: green = live, amber = falling back, grey = local only.
 4. **Safety:** messages about self-harm are **never sent** to the Worker. They get a fixed, sincere reply and crisis lines (Taiwan 1925 / 1995 / 1980, findahelpline.com elsewhere).
 
@@ -58,13 +58,13 @@ npx wrangler deploy                          # → https://zen-meow-api.<your-su
 
 If the taskbar light turns amber, the chat log prints the reason once, the light's tooltip shows it, and the browser console logs it too.
 
-1. Open the Worker URL in a browser. It should show `{"ok":true, "model":"gemini-2.5-flash", "keyConfigured":true, "allowedOrigins":["https://superdenis777.github.io"]}`.
+1. Open the Worker URL in a browser. It should show `{"ok":true, "model":"gemini-3.8-flash", "keyConfigured":true, "allowedOrigins":["https://superdenis777.github.io"]}`.
    - `keyConfigured: false`: run `npx wrangler secret put GEMINI_API_KEY`.
    - `allowedOrigins` doesn't list the site: fix `ALLOWED_ORIGINS`.
    - A wrong model, or no JSON at all: the deployed code isn't this repo's `worker/worker.js`. Redeploy with `npx wrangler deploy`.
 2. Here's what the reasons mean:
    - `network or CORS blocked`: the Worker didn't answer, or the origin isn't allowed.
-   - `HTTP 502 … Gemini 404 … not found`: the model name is wrong or retired. `gemini-1.5-*` no longer exists.
+   - `HTTP 502 … Gemini 404 … not found` or `no longer available to new users`: the model is retired. Google's message names the replacement, so set `GEMINI_MODEL` to it. (`gemini-1.5-*` is gone, and `gemini-2.5-flash` is closed to new keys.)
    - `HTTP 429`: you're over your Gemini quota.
    - `HTTP 503`: no key is configured.
 3. `npx wrangler tail` streams the Worker's logs, including Gemini's error messages.

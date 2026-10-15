@@ -18,9 +18,19 @@
    Keep FRAMEWORK and CATS in sync with personas.js.
    ===================================================================== */
 
-// Gemini 1.5 models are retired and return 404. Override with the
-// GEMINI_MODEL variable if you need a different current model.
-const DEFAULT_MODEL = "gemini-2.5-flash";
+// Google retires models and closes older ones to new keys (1.5 is gone;
+// 2.5 Flash now 404s for new users). Override with the GEMINI_MODEL
+// variable when Google's error message names a newer one.
+const DEFAULT_MODEL = "gemini-3.8-flash";
+
+// 2.5 models take a thinking budget (0 = off). 3.x models take a thinking
+// level instead and count thinking toward the output limit, so leave room.
+function generationConfigFor(model, withThinking) {
+  if (/^gemini-2\./.test(model)) {
+    return { temperature: 0.9, maxOutputTokens: 220, ...(withThinking && { thinkingConfig: { thinkingBudget: 0 } }) };
+  }
+  return { maxOutputTokens: 1024, ...(withThinking && { thinkingConfig: { thinkingLevel: "low" } }) };
+}
 const endpointFor = model => `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
 
 // Override with the ALLOWED_ORIGINS variable (comma-separated).
@@ -212,21 +222,21 @@ export default {
     const input = validate(body);
     if (input.error) return json(input, 400, cors);
 
+    const call = withThinking => fetch(endpointFor(model), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemPrompt(input.cat, input.lang, input.layer) }] },
+        contents: input.contents,
+        generationConfig: generationConfigFor(model, withThinking),
+      }),
+    });
+
     let res;
     try {
-      res = await fetch(endpointFor(model), {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: systemPrompt(input.cat, input.lang, input.layer) }] },
-          contents: input.contents,
-          generationConfig: {
-            temperature: 0.9,
-            maxOutputTokens: 220,
-            thinkingConfig: { thinkingBudget: 0 }, // short chatty replies; skip thinking for speed
-          },
-        }),
-      });
+      res = await call(true);
+      // if this model rejects our thinking settings, ask again without them
+      if (res.status === 400) res = await call(false);
     } catch {
       return json({ error: "upstream unreachable" }, 502, cors);
     }
@@ -243,6 +253,7 @@ export default {
     const blocked = data?.promptFeedback?.blockReason;
     if (blocked) return json({ error: "blocked by safety filter", detail: blocked }, 422, cors);
     const reply = (data?.candidates?.[0]?.content?.parts || [])
+      .filter(p => !p.thought) // never show the model's thinking
       .map(p => p.text || "")
       .join("")
       .replace(/[*_#`]/g, "") // belt and braces: no markdown in a pixel chat log
