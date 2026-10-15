@@ -68,7 +68,7 @@ If the taskbar light turns amber, the chat log prints the reason once, the light
    - `HTTP 429`: you're over your Gemini quota.
    - `Gemini 503 … high demand` or `timeout`: Google is overloaded. Free-tier keys are served last. The Worker hands the turn to a lighter backup model (`GEMINI_FALLBACK_MODEL`, default `gemini-3.5-flash-lite`), and the page tries live again after 8 seconds. Turning on billing for the key in Google AI Studio (paid tier) is the real fix.
    - `HTTP 503`: no key is configured.
-   - `Gemini 400 … User location is not supported`: the Worker ran in a Cloudflare data center Google won't serve (often Hong Kong for visitors in Taiwan). `wrangler.toml` pins it near `gcp:us-central1`, but that only applies when you deploy with `npx wrangler deploy`, not by pasting into the dashboard. The health check's `colo` field shows which data center answered.
+   - `Gemini 400 … User location is not supported`: the Worker ran in a Cloudflare data center Google won't serve (often Hong Kong for visitors in Taiwan). `wrangler.toml` pins it near `gcp:us-central1`, but that only applies when you deploy with `npx wrangler deploy`, not by pasting into the dashboard. The health check's `colo` field shows which data center received the request; with placement on, the Gemini call itself runs near the US region.
 3. `npx wrangler tail` streams the Worker's logs, including Gemini's error messages.
 
 ## Top bar
