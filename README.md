@@ -7,16 +7,19 @@ Live: https://superdenis777.github.io/zen-meow-studio/
 
 ## Run it
 
-Open `index.html` in a browser. There's no build step, no server, and no API calls.
-(Pixel fonts load from Google Fonts. Offline, it falls back to system fonts and still works.)
+Open `index.html` in a browser. There's no build step.
+Without the Worker (below), the cats use their built-in scripted replies, so the page always works offline.
 
 ## Files
 
 | File | What's in it |
 | --- | --- |
-| `index.html` | Layout, styles, sprites, the reply engine, the Release card, and audio |
-| `personas.js` | The 6-layer framework, each cat's system instructions, signals, and all reply lines (EN + 繁中) |
-| `i18n.js` | UI strings, fortunes, grounding rituals, and lucky objects (EN + 繁中) |
+| `index.html` | Layout, themes, sprites, chat, Release card, Dissolve box, Notebook, live/local routing |
+| `personas.js` | The 6-layer framework, each cat's system instructions, signals, and all scripted lines (EN + 繁中) |
+| `i18n.js` | UI strings, fortunes, rituals, and Mochi's dissolve notes (EN + 繁中) |
+| `audio.js` | Procedural Web Audio: 8-bit SFX, rain, vinyl, and purr. No audio files. |
+| `worker/worker.js` | Cloudflare Worker that turns chat turns into Gemini calls |
+| `worker/wrangler.toml` | Worker config |
 
 ## The cats
 
@@ -26,20 +29,41 @@ Open `index.html` in a browser. There's no build step, no server, and no API cal
 | **NOX** | Structural Detective | 2 | Dry, noir. Cross-examines thoughts, never people. |
 | **KIKI** | Subversive Wizard | 3 | Theatrical, paradoxical, reframes everything. |
 
-## How replies work
+## How a reply is made
 
-V2 is still fully scripted. `FRAMEWORK` and each cat's `system` text in `personas.js` are the brief every line was written to, and they're ready to use as a system prompt if a model-backed version comes later.
+1. **The local engine always runs first.** It picks this turn's layer from the cat's arc (0 Unconditioned Baseline → 1 Somatic Ground → 2 Loop De-escalation → 3 Creative Subversion → 4 Sovereign Choice → 5 Real-Life Release). Signals in your message can jump to a layer: body words go to 1, rumination to 2, feeling stuck to 3, decisions to 4, and goodbyes to 5.
+2. **In LIVE mode**, the page sends `{ prompt, cat, history, lang, layer }` to the Worker. The Worker builds the system prompt from the framework, that cat's persona, and a hint for this turn's layer, then calls `gemini-2.5-flash`.
+3. **If the Worker is down, slow (9 s), rate-limited, or returns nothing**, the scripted line from step 1 is used. The page then waits 1–2 minutes before trying the Worker again. The taskbar light shows the state: green = live, amber = falling back, grey = local only.
+4. **Safety:** messages about self-harm are **never sent** to the Worker. They get a fixed, sincere reply and crisis lines (Taiwan 1925 / 1995 / 1980, findahelpline.com elsewhere).
 
-- Each cat walks its own **arc** through the six layers (0 Unconditioned Baseline → 1 Somatic Ground → 2 Loop De-escalation → 3 Creative Subversion → 4 Sovereign Choice → 5 Real-Life Release). The six lamps under each nameplate show where that cat is on its arc.
-- **Signals** in your message jump straight to a layer for that turn: body words go to 1, rumination ("always", "what if", 焦慮…) to 2, feeling stuck to 3, decisions to 4, and goodbyes or thanks to 5.
-- When a cat reaches Layer 5, it points you at the **Release** button.
-- Replies follow the language you write in: Chinese characters get 繁中 replies, and anything else uses the toggle.
-- `{word}` in English lines echoes a word from your message.
-- **Safety:** messages about self-harm skip the jokes. The cat answers sincerely and the log shows crisis lines (Taiwan 1925 / 1995 / 1980, findahelpline.com elsewhere).
+Clicking **LIVE / LOCAL** in the taskbar switches modes. In local mode nothing leaves the browser.
+
+## Live cats (Cloudflare Worker + Gemini)
+
+```bash
+cd worker
+npx wrangler login
+npx wrangler secret put GEMINI_API_KEY      # paste a key from Google AI Studio
+npx wrangler deploy                          # → https://zen-meow-api.<your-subdomain>.workers.dev
+```
+
+- If your workers.dev URL differs, update `API_URL` near the top of the script in `index.html`.
+- The key only ever lives in the Worker secret. It is never in this repo or the page.
+- Only `https://superdenis777.github.io` may call the Worker from a browser. Change `ALLOWED_ORIGINS` in `wrangler.toml` to add origins (add `null` to test from a file opened on disk).
+- The client only names a cat, and the Worker owns the prompts, so the endpoint can't be used as a general-purpose Gemini proxy.
+- **Recommended:** turn on the per-IP rate limit in `wrangler.toml`. An origin check stops other websites, not scripts.
+- `FRAMEWORK` and the cat personas are duplicated in `worker/worker.js` and `personas.js`. Keep them in sync.
 
 ## Top bar
 
-- **EN / 繁中** switches the whole UI and the cats' language. Your choice is remembered.
-- **Sound** is off by default. When on, it plays soft 8-bit key clicks, typing ticks, and a per-cat chime when a reply lands. Everything is synthesized with Web Audio, so there are no audio files.
-- **Release / Ground Me** opens a pixel fortune card: a grounding note, a three-step ritual, and a lucky object. "I'm going" dims the room until you come back.
-- After 12 minutes, Mochi suggests a break once.
+- **EN / 繁中**: switches the whole UI and the cats' language. Cats also reply in whatever language you type.
+- **Theme**: Midnight Dial-Up, Sunset CRT (with scanlines), Cyber Matcha, or Rose Quartz.
+- **Dissolve Thought**: type a looping worry, press *Release / Dissolve*, and watch it burn into pixel light. Then Mochi says one grounding line. Nothing you type there is saved, logged, or sent.
+- **Sound**: the ambience panel, with a volume slider plus toggles for clicks & chimes, soft rain, vinyl hiss & crackle, and cat purr. All of it is synthesized live with Web Audio. It pauses while you've stepped away.
+- **Release / Ground Me**: a pixel fortune card with a grounding note, a three-step ritual, and a lucky object. "I'm going" dims the room until you return.
+
+## Zen Notebook
+
+Tap the ☆ on any cat reply or fortune card to save it. Saved cards appear in the **Zen Notebook** window (the taskbar **Notebook** button jumps to it). They're stored in this browser's `localStorage` only.
+
+Settings (language, theme, sound, live/local) are also remembered in `localStorage`.

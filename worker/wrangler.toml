@@ -1,0 +1,18 @@
+name = "zen-meow-api"
+main = "worker.js"
+compatibility_date = "2025-06-01"
+
+[vars]
+# Comma-separated. Add "null" to also allow the page opened straight from disk.
+ALLOWED_ORIGINS = "https://superdenis777.github.io"
+
+# The Gemini key is a secret, never a var:
+#   npx wrangler secret put GEMINI_API_KEY
+
+# Optional per-IP rate limit (recommended: the Worker URL is public).
+# worker.js uses it automatically when the RATE_LIMITER binding exists.
+# Check Cloudflare's "Rate Limiting binding" docs for the current syntax.
+# [[ratelimits]]
+# name = "RATE_LIMITER"
+# namespace_id = "1001"
+# simple = { limit = 20, period = 60 }

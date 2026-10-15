@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="midnight">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,25 +9,82 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
 <style>
-  :root {
+  /* ---------- Themes: every color the desktop uses lives here ---------- */
+  :root, html[data-theme="midnight"] {          /* Midnight Dial-Up */
     --desk: #1fb5ad;
     --desk-dot: #189a93;
     --win: #fff6dc;
-    --ink: #1a1030;
     --title-a: #ff4fa3;
     --title-b: #7a5cff;
-    --bevel-hi: #ffffff;
-    --bevel-lo: #8a7f9c;
     --log-bg: #0d0b2a;
     --log-ink: #e9e6ff;
     --sys: #8be9fd;
-    --you: #ffe347;
     --lime: #39ff14;
-    --sun: #ffb000;
     --wall-a: #ffd7f0;
     --wall-b: #ffc4e6;
     --floor-a: #7fd4ff;
     --floor-b: #5ec0f2;
+    --chrome: #d9d0ea;
+    --chrome-2: #efe6ff;
+  }
+  html[data-theme="sunset"] {                   /* Sunset CRT */
+    --desk: #f0a35e;
+    --desk-dot: #dd8c4a;
+    --win: #fff1e0;
+    --title-a: #ff6b5b;
+    --title-b: #ff9f43;
+    --log-bg: #2a1410;
+    --log-ink: #ffe9d6;
+    --sys: #ffc58a;
+    --lime: #ffb000;
+    --wall-a: #ffe0c2;
+    --wall-b: #ffd0a8;
+    --floor-a: #ffb38a;
+    --floor-b: #f79a6e;
+    --chrome: #f3d9c2;
+    --chrome-2: #fff0e2;
+  }
+  html[data-theme="matcha"] {                   /* Cyber Matcha */
+    --desk: #2f4a3a;
+    --desk-dot: #27402f;
+    --win: #eef3e2;
+    --title-a: #8fc28f;
+    --title-b: #2f6b4f;
+    --log-bg: #0f1f17;
+    --log-ink: #e3f2dc;
+    --sys: #b8e6a0;
+    --lime: #a6ff7a;
+    --wall-a: #dfe9cf;
+    --wall-b: #cfdcbc;
+    --floor-a: #9cc5a1;
+    --floor-b: #86b38c;
+    --chrome: #cfdcc4;
+    --chrome-2: #eef3e2;
+  }
+  html[data-theme="rose"] {                     /* Rose Quartz */
+    --desk: #c9b6ff;
+    --desk-dot: #b9a3f5;
+    --win: #fff4fb;
+    --title-a: #ff9ecf;
+    --title-b: #b18cff;
+    --log-bg: #2b1d3f;
+    --log-ink: #fbeaff;
+    --sys: #ffc4e6;
+    --lime: #ffb3dc;
+    --wall-a: #ffe3f1;
+    --wall-b: #ffd3ea;
+    --floor-a: #e6d4ff;
+    --floor-b: #d8c2ff;
+    --chrome: #ecdcf5;
+    --chrome-2: #fff4fb;
+  }
+
+  :root {
+    --ink: #1a1030;
+    --bevel-hi: #ffffff;
+    --bevel-lo: #8a7f9c;
+    --you: #ffe347;
+    --sun: #ffb000;
     --cjk: "DotGothic16", "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
     --pixel: "Press Start 2P", var(--cjk);
     --term: "VT323", var(--cjk);
@@ -55,6 +112,18 @@
     font-family: var(--term);
     font-size: 20px;
     padding: 0 0 64px;
+    transition: background-color .3s steps(3);
+  }
+  /* Sunset CRT: scanlines + a warm vignette over everything */
+  html[data-theme="sunset"] body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    pointer-events: none;
+    background:
+      repeating-linear-gradient(0deg, rgba(60, 20, 0, .07) 0 1px, transparent 1px 3px),
+      radial-gradient(ellipse at center, transparent 60%, rgba(120, 40, 0, .22));
   }
   .page { padding: 16px; }
 
@@ -64,10 +133,12 @@
     top: 0;
     z-index: 20;
     display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
     align-items: center;
-    gap: 8px;
+    gap: 6px 8px;
     padding: 5px 10px;
-    background: #d9d0ea;
+    background: var(--chrome);
     border-bottom: 3px solid #fff;
     box-shadow: 0 3px 0 var(--ink);
     font-family: var(--pixel);
@@ -75,7 +146,7 @@
   }
   .mb-brand { margin-right: auto; white-space: nowrap; font-size: 9px; }
   .mb-brand b { color: var(--title-b); }
-  .mb-btn, .seg button {
+  .mb-btn, .seg button, .mb-select {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -86,20 +157,22 @@
     color: var(--ink);
     background: #fff;
     border: 2px solid var(--ink);
+    border-radius: 0;
     box-shadow: inset -2px -2px 0 var(--bevel-lo);
     cursor: pointer;
     white-space: nowrap;
   }
+  .mb-select { font-size: var(--fs-xs); padding: 0 4px; max-width: 170px; }
   .mb-btn:active, .seg button:active { box-shadow: inset 2px 2px 0 var(--bevel-lo); }
   .seg { display: inline-flex; }
   .seg button + button { border-left: 0; }
   .seg button[aria-pressed="true"] { background: var(--ink); color: #fff; box-shadow: none; }
   .seg button[data-lang="zh"] { font-family: var(--cjk); font-size: 13px; }
-  .mb-btn[aria-pressed="true"] { background: var(--lime); }
+  .mb-btn[aria-pressed="true"], .mb-btn[aria-expanded="true"] { background: var(--lime); }
   .ico svg { display: block; width: 18px; height: 18px; }
   #soundBtn .ico-off { display: none; }
-  #soundBtn[aria-pressed="false"] .ico-on { display: none; }
-  #soundBtn[aria-pressed="false"] .ico-off { display: block; }
+  #soundBtn[data-on="false"] .ico-on { display: none; }
+  #soundBtn[data-on="false"] .ico-off { display: block; }
   .release { background: var(--you); }
   .release .short { display: none; }
   .release.nudge { animation: nudge .5s steps(2) 8; }
@@ -374,17 +447,36 @@
   }
   html[lang="zh-Hant"] .log { font-size: 17px; line-height: 1.4; }
   .msg { margin: 0 0 6px; overflow-wrap: anywhere; }
-  .msg .time { color: #6f6a99; }
+  .msg .time { color: #8a84b3; }
   .msg.sys { color: var(--sys); }
   .msg.you .nick { color: var(--you); }
   .msg.care { color: #ffd1e8; }
+
+  /* save-to-notebook star */
+  .star {
+    display: inline-flex;
+    vertical-align: middle;
+    width: 20px; height: 20px;
+    margin-left: 4px;
+    padding: 2px;
+    color: #fff;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    opacity: .5;
+  }
+  .star svg { width: 100%; height: 100%; display: block; }
+  .star:hover, .star:focus-visible { opacity: 1; }
+  .star[aria-pressed="true"] { opacity: 1; color: var(--you); }
+  .star:focus-visible { outline: 2px dashed var(--you); }
+  .log .star svg rect[fill="#1a1030"] { fill: #8a84b3; }
 
   .status {
     height: 26px;
     margin: 8px 0;
     padding: 2px 8px;
     font-size: 18px;
-    background: #efe6ff;
+    background: var(--chrome-2);
     border: 2px solid var(--ink);
     box-shadow: inset 2px 2px 0 var(--bevel-lo);
     white-space: nowrap;
@@ -440,7 +532,7 @@
     padding: 6px 0;
   }
   html[lang="zh-Hant"] .field input { font-size: 17px; }
-  .field input::placeholder { color: #3f7a3a; }
+  .field input::placeholder { color: var(--lime); opacity: .45; }
   .field:focus-within { outline: 3px dashed var(--title-a); outline-offset: 2px; }
 
   .send {
@@ -459,7 +551,36 @@
   .shake { animation: shake .3s steps(4); }
   @keyframes shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
 
-  /* ---------- Release card ---------- */
+  /* ---------- Zen Notebook ---------- */
+  .notebook { grid-column: 1 / -1; }
+  .nb-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+  }
+  .nb-empty { margin: 4px 0; color: #6f6a99; }
+  html[lang="zh-Hant"] .nb-empty { font-size: 16px; }
+  .nb-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 12px 10px 16px;
+    background: #fff;
+    border: 2px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  .nb-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--cat-color, var(--sun)); border-right: 2px solid var(--ink); }
+  .nb-head { display: flex; align-items: center; gap: 6px; padding-right: 26px; font-family: var(--pixel); font-size: var(--fs-xs); line-height: 1.6; }
+  .nb-head b { color: var(--ink); background: var(--cat-color, var(--you)); padding: 1px 4px; border: 2px solid var(--ink); font-weight: normal; }
+  .nb-head time { color: #6f6a99; margin-left: auto; }
+  .nb-card p { margin: 0; line-height: 1.1; }
+  html[lang="zh-Hant"] .nb-card p, html[lang="zh-Hant"] .nb-card li { font-size: 16px; line-height: 1.4; }
+  .nb-card ul { margin: 0; padding-left: 18px; font-size: 17px; line-height: 1.1; }
+  .nb-card .nb-lucky { font-size: 17px; color: #6f6a99; }
+  .nb-del { position: absolute; top: 6px; right: 6px; }
+
+  /* ---------- Dialog windows (Release card, Dissolve box) ---------- */
   .card {
     width: min(380px, calc(100% - 32px));
     max-height: calc(100% - 32px);
@@ -474,8 +595,10 @@
   .card::backdrop {
     background: repeating-conic-gradient(rgba(13, 11, 42, .75) 0 25%, rgba(13, 11, 42, .55) 0 50%) 0 0 / 4px 4px;
   }
-  .card-body { padding: 16px 18px 18px; text-align: center; }
+  .card-body { position: relative; padding: 16px 18px 18px; text-align: center; }
   .card-no { font-family: var(--pixel); font-size: var(--fs-xs); color: var(--title-b); }
+  .card-star { position: absolute; top: 8px; right: 10px; width: 32px; height: 32px; margin: 0; opacity: 1; }
+  .card-star[aria-pressed="false"] { color: #fff; }
   .card-sun { width: 66px; height: 66px; margin: 12px auto; }
   .card-sun svg { width: 100%; height: 100%; display: block; animation: spin 8s steps(8) infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -499,6 +622,108 @@
   .card-actions .send { padding: 10px 14px; }
   .card-actions .chip { font-size: var(--fs-s); padding: 10px 12px; }
 
+  /* Burn the Thought */
+  .dissolve { width: min(440px, calc(100% - 32px)); }
+  .dissolve .send { padding: 10px 16px; }
+  .dissolve .hint { margin: 0 0 10px; text-align: left; line-height: 1.1; }
+  html[lang="zh-Hant"] .dissolve .hint { font-size: 15px; line-height: 1.45; }
+  .burn {
+    position: relative;
+    margin-bottom: 14px;
+    background: var(--log-bg);
+    border: 3px solid var(--ink);
+    box-shadow: inset 3px 3px 0 #000;
+  }
+  .burn textarea, .burn .embers {
+    display: block;
+    width: 100%;
+    min-height: 120px;
+    margin: 0;
+    padding: 10px;
+    font-family: var(--term);
+    font-size: 22px;
+    line-height: 1.2;
+    color: #ffd8b0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    text-align: left;
+  }
+  html[lang="zh-Hant"] .burn textarea, html[lang="zh-Hant"] .burn .embers { font-size: 18px; line-height: 1.45; }
+  .burn textarea { resize: none; background: transparent; border: 0; outline: 0; caret-color: var(--sun); }
+  .burn textarea::placeholder { color: #ffd8b0; opacity: .4; }
+  .burn:focus-within { outline: 3px dashed var(--sun); outline-offset: 2px; }
+  .burn .embers { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+  .burn.burning textarea { visibility: hidden; }
+  .embers .ch { display: inline-block; white-space: pre; animation: ember 1.5s steps(9) forwards; animation-delay: var(--d); }
+  @keyframes ember {
+    0%   { color: #ffd8b0; }
+    25%  { color: #ffb000; text-shadow: 0 0 6px #ff6b00; }
+    55%  { color: #fff6b0; text-shadow: 0 0 10px #ffe347; opacity: 1; }
+    100% { color: #fff; text-shadow: 0 0 14px #fff; transform: translate(var(--dx), var(--dy)) scale(.2); opacity: 0; }
+  }
+  .spark {
+    position: absolute;
+    width: 4px; height: 4px;
+    background: var(--c);
+    box-shadow: 0 0 6px var(--c);
+    animation: spark 1.3s steps(8) forwards;
+    animation-delay: var(--d);
+    opacity: 0;
+  }
+  @keyframes spark {
+    0%   { opacity: 0; transform: translate(0, 0); }
+    15%  { opacity: 1; }
+    100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(.5); }
+  }
+  .mochi-note {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 14px 0 0;
+    padding: 8px 10px;
+    text-align: left;
+    line-height: 1.1;
+    background: #fff;
+    border: 2px solid var(--ink);
+    box-shadow: 3px 3px 0 var(--ink);
+    animation: fadein .8s steps(4);
+  }
+  .mochi-note svg { width: 44px; height: 42px; flex: none; }
+  html[lang="zh-Hant"] .mochi-note { font-size: 16px; line-height: 1.4; }
+  @keyframes fadein { from { opacity: 0; transform: translateY(6px); } }
+
+  /* ---------- Ambience panel ---------- */
+  .panel {
+    position: fixed;
+    top: 50px;
+    right: 12px;
+    z-index: 25;
+    width: min(300px, calc(100% - 24px));
+  }
+  .vol { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-family: var(--pixel); font-size: var(--fs-xs); }
+  .vol input { flex: 1; min-width: 0; accent-color: var(--title-b); }
+  .toggles { display: grid; gap: 6px; }
+  .tog {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    font-family: var(--term);
+    font-size: 20px;
+    text-align: left;
+    color: var(--ink);
+    background: #fff;
+    border: 2px solid var(--ink);
+    box-shadow: 2px 2px 0 var(--ink);
+    cursor: pointer;
+  }
+  html[lang="zh-Hant"] .tog { font-size: 16px; }
+  .tog .box { width: 14px; height: 14px; flex: none; border: 2px solid var(--ink); background: #fff; }
+  .tog[aria-pressed="true"] { background: var(--chrome-2); }
+  .tog[aria-pressed="true"] .box { background: var(--lime); box-shadow: inset 0 0 0 2px #fff; }
+  .amb-note { margin: 10px 0 0; font-size: 16px; line-height: 1.1; color: #6f6a99; }
+  html[lang="zh-Hant"] .amb-note { font-size: 13px; line-height: 1.4; }
+
   /* ---------- Stepped-away screen ---------- */
   .away {
     position: fixed;
@@ -514,7 +739,7 @@
   .away-box { max-width: 460px; }
   .away-cats { display: flex; justify-content: center; gap: 10px; opacity: .55; filter: saturate(.5); }
   .away-cats svg { width: 66px; height: 63px; }
-  .zzz { margin: 4px 0 12px; color: var(--sys); font-size: 26px; animation: blink 2s steps(1) infinite; }
+  .zzz { margin: 4px 0 12px; color: #8be9fd; font-size: 26px; animation: blink 2s steps(1) infinite; }
   .away h2 { margin: 0 0 10px; font-family: var(--pixel); font-size: var(--fs-m); color: var(--you); font-weight: normal; line-height: 1.6; }
   .away p { margin: 0 0 20px; line-height: 1.2; }
   html[lang="zh-Hant"] .away p { font-size: 17px; line-height: 1.5; }
@@ -528,7 +753,7 @@
     align-items: center;
     gap: 8px;
     padding: 6px 10px;
-    background: #d9d0ea;
+    background: var(--chrome);
     border-top: 3px solid #fff;
     box-shadow: 0 -3px 0 var(--ink);
     font-family: var(--pixel);
@@ -541,11 +766,28 @@
     padding: 6px 10px;
     background: var(--lime);
     border: 2px solid var(--ink);
-    box-shadow: inset 2px 2px 0 #c6ffb8, inset -2px -2px 0 #1d8a0a;
+    box-shadow: inset 2px 2px 0 rgba(255, 255, 255, .6), inset -2px -2px 0 rgba(0, 0, 0, .25);
     cursor: pointer;
   }
-  .tray { margin-left: auto; padding: 6px 8px; border: 2px solid var(--bevel-lo); box-shadow: inset 2px 2px 0 var(--bevel-lo); background: #efe6ff; white-space: nowrap; font-size: 9px; }
-  .task { padding: 6px 8px; border: 2px solid var(--ink); background: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .tray { margin-left: auto; display: flex; align-items: center; gap: 8px; padding: 3px 6px; border: 2px solid var(--bevel-lo); box-shadow: inset 2px 2px 0 var(--bevel-lo); background: var(--chrome-2); white-space: nowrap; font-size: 9px; }
+  .task { padding: 6px 8px; border: 2px solid var(--ink); background: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; font: inherit; color: var(--ink); }
+  button.task { cursor: pointer; }
+  .live {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 6px;
+    font-family: var(--pixel);
+    font-size: var(--fs-xs);
+    color: var(--ink);
+    background: #fff;
+    border: 2px solid var(--ink);
+    cursor: pointer;
+  }
+  .live .led { width: 8px; height: 8px; border: 1px solid var(--ink); background: #9a94b8; }
+  .live[data-state="idle"] .led { background: #c7f0c0; }
+  .live[data-state="live"] .led { background: #39ff14; box-shadow: 0 0 6px #39ff14; }
+  .live[data-state="fallback"] .led { background: #ffb000; }
 
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
@@ -554,24 +796,30 @@
     .desktop { grid-template-columns: minmax(0, 1fr); }
     .log { height: 300px; }
   }
-  @media (max-width: 560px) {
+  @media (max-width: 640px) {
     .release .full { display: none; }
     .release .short { display: inline; }
-    #soundLabel { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+    .mb-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+    .mb-select { max-width: 112px; }
   }
   @media (max-width: 480px) {
     :root { --sprite: 3.5px; }
     body { font-size: 18px; }
+    .mb-brand { display: none; }
     .room { padding-top: 84px; }
     .bubble { font-size: 15px; }
     .nameplate { font-size: 6px; }
     .task { display: none; }
+    .panel { top: 86px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .marquee span { animation: none; padding-left: 8px; }
     .cat.typing .sprite, .cat.typing .laptop, .cat[aria-checked="true"] .arrow, .blink,
-    .release.nudge, .card[open], .card-sun svg, .zzz { animation: none; }
+    .release.nudge, .card[open], .card-sun svg, .zzz, .mochi-note { animation: none; }
+    .embers .ch { animation: fadeaway .6s linear forwards; }
+    .spark { display: none; }
+    @keyframes fadeaway { to { opacity: 0; } }
   }
 </style>
 </head>
@@ -579,13 +827,18 @@
 
 <div id="app">
   <nav class="menubar" aria-label="MeowChat">
-    <span class="mb-brand">MeowChat <b>v2</b></span>
+    <span class="mb-brand">MeowChat <b>v3</b></span>
     <div class="seg" role="group" id="langGroup">
       <button type="button" data-lang="en">EN</button>
       <button type="button" data-lang="zh" lang="zh-Hant">繁中</button>
     </div>
-    <button type="button" class="mb-btn" id="soundBtn" aria-pressed="false">
-      <span class="ico" id="soundIco"></span><span id="soundLabel"></span>
+    <label class="sr-only" for="theme" data-i18n="themeLabel"></label>
+    <select class="mb-select" id="theme"></select>
+    <button type="button" class="mb-btn" id="dissolveBtn" aria-haspopup="dialog">
+      <span class="ico" id="flameIco"></span><span class="mb-label" data-i18n="dissolve"></span>
+    </button>
+    <button type="button" class="mb-btn" id="soundBtn" aria-expanded="false" aria-controls="ambience">
+      <span class="ico" id="soundIco"></span><span class="mb-label" data-i18n="sound"></span>
     </button>
     <button type="button" class="mb-btn release" id="releaseBtn" aria-haspopup="dialog">
       <span class="ico" id="sunIco"></span><span class="full" data-i18n="release"></span><span class="short" data-i18n="releaseShort"></span>
@@ -643,15 +896,51 @@
           </form>
         </div>
       </section>
+
+      <!-- Zen Notebook -->
+      <section class="window notebook" id="notebook" aria-labelledby="nb-title">
+        <div class="titlebar">
+          <span class="icon" aria-hidden="true"></span>
+          <span class="title"><span id="nb-title" data-i18n="notebookTitle"></span> (<span id="nbCount">0</span>)</span>
+          <button class="winbtn" type="button" aria-label="Minimize" data-joke>_</button>
+          <button class="winbtn" type="button" aria-label="Close" data-joke>×</button>
+        </div>
+        <div class="winbody">
+          <p class="nb-empty" id="nbEmpty" data-i18n="notebookEmpty"></p>
+          <div class="nb-grid" id="nbGrid"></div>
+        </div>
+      </section>
     </main>
   </div>
 
   <footer class="taskbar">
     <button class="start" type="button" data-joke data-i18n="start"></button>
     <span class="task" data-i18n="taskChat"></span>
-    <span class="task" data-i18n="taskLobby"></span>
-    <span class="tray"><span id="clock">--:--</span></span>
+    <button class="task" type="button" id="taskNotebook" data-i18n="taskNotebook"></button>
+    <span class="tray">
+      <button type="button" class="live" id="liveBtn"><span class="led" aria-hidden="true"></span><span id="liveLabel"></span></button>
+      <span id="clock">--:--</span>
+    </span>
   </footer>
+
+  <!-- Ambience panel (opened from the Sound button) -->
+  <div class="panel window" id="ambience" role="dialog" aria-labelledby="amb-title" hidden>
+    <div class="titlebar">
+      <span class="icon" aria-hidden="true"></span>
+      <span class="title" id="amb-title" data-i18n="ambTitle"></span>
+      <button class="winbtn" type="button" id="ambX" aria-label="Close">×</button>
+    </div>
+    <div class="winbody">
+      <label class="vol"><span data-i18n="ambVolume"></span><input type="range" id="vol" min="0" max="100" step="1"></label>
+      <div class="toggles">
+        <button type="button" class="tog" data-ch="sfx"><span class="box" aria-hidden="true"></span><span data-i18n="chSfx"></span></button>
+        <button type="button" class="tog" data-ch="rain"><span class="box" aria-hidden="true"></span><span data-i18n="chRain"></span></button>
+        <button type="button" class="tog" data-ch="vinyl"><span class="box" aria-hidden="true"></span><span data-i18n="chVinyl"></span></button>
+        <button type="button" class="tog" data-ch="purr"><span class="box" aria-hidden="true"></span><span data-i18n="chPurr"></span></button>
+      </div>
+      <p class="amb-note" data-i18n="ambNote"></p>
+    </div>
+  </div>
 </div>
 
 <!-- Release / Ground Me: pixel fortune card -->
@@ -662,6 +951,7 @@
     <button class="winbtn" type="button" id="cardX" aria-label="Close">×</button>
   </div>
   <div class="card-body">
+    <button type="button" class="star card-star" id="cardStar" aria-pressed="false"></button>
     <div class="card-no" id="cardNo"></div>
     <div class="card-sun" id="cardSun" aria-hidden="true"></div>
     <p class="fortune" id="fortune"></p>
@@ -672,6 +962,24 @@
       <button class="send" type="button" id="cardGo" data-i18n="cardGo"></button>
       <button class="chip" type="button" id="cardStay" data-i18n="cardStay"></button>
     </div>
+  </div>
+</dialog>
+
+<!-- Burn the Thought: nothing typed here is stored or sent -->
+<dialog class="card dissolve" id="dissolve" aria-labelledby="dissolve-title">
+  <div class="titlebar">
+    <span class="icon" aria-hidden="true"></span>
+    <span class="title" id="dissolve-title" data-i18n="dissolveTitle"></span>
+    <button class="winbtn" type="button" id="dissolveX" aria-label="Close">×</button>
+  </div>
+  <div class="card-body">
+    <p class="hint" id="dissolveHint" data-i18n="dissolveHint"></p>
+    <div class="burn" id="burn">
+      <textarea id="thought" maxlength="280" rows="4" aria-describedby="dissolveHint"></textarea>
+      <div class="embers" id="embers" aria-hidden="true"></div>
+    </div>
+    <button class="send" type="button" id="dissolveGo" data-i18n="dissolveGo"></button>
+    <div id="mochiNoteSlot" aria-live="polite"></div>
   </div>
 </dialog>
 
@@ -688,10 +996,16 @@
 
 <script src="personas.js"></script>
 <script src="i18n.js"></script>
+<script src="audio.js"></script>
 <script>
 (() => {
   const P = window.MEOW_PERSONAS;
   const I18N = window.MEOW_I18N;
+  const A = window.MeowAudio;
+
+  // Live cats: the Cloudflare Worker in worker/worker.js
+  const API_URL = "https://zen-meow-api.superdenis777.workers.dev";
+  const API_TIMEOUT_MS = 9000;
 
   /* ================================================================
      PIXEL SPRITES
@@ -747,6 +1061,28 @@
     ".Y...Y...Y.",
     ".....Y.....",
   ];
+  const FLAME = [
+    "...F...",
+    "..FF...",
+    "..FFF..",
+    ".FFOFF.",
+    ".FOOOF.",
+    "FFOYOFF",
+    "FOYYYOF",
+    "FOYYYOF",
+    ".FOOOF.",
+  ];
+  const STAR = [
+    "....K....",
+    "...KYK...",
+    "...KYK...",
+    "KKKKYKKKK",
+    ".KYYYYYK.",
+    "..KYYYK..",
+    ".KYYKYYK.",
+    ".KYK.KYK.",
+    ".KK...KK.",
+  ];
   const SPEAKER_ON = [
     "...K.....", "..KK..K..", "KKKK...K.", "KKKK.K.K.",
     "KKKK.K.K.", "KKKK...K.", "..KK..K..", "...K.....",
@@ -769,6 +1105,7 @@
     });
     return `<svg class="${cls}" viewBox="0 0 ${w} ${h}" shape-rendering="crispEdges" aria-hidden="true">${rects}</svg>`;
   }
+  const STAR_SVG = svg(STAR, { K: "#1a1030", Y: "currentColor" });
 
   // Look + sound for each persona (the words live in personas.js)
   const LOOKS = {
@@ -811,13 +1148,16 @@
     },
   };
 
-  const CATS = P.CATS.map(c => ({ ...c, ...LOOKS[c.id], state: { turn: 0, hintedAt: -99 }, pending: 0 }));
+  const CATS = P.CATS.map(c => ({ ...c, ...LOOKS[c.id], state: { turn: 0, hintedAt: -99 }, pending: 0, history: [] }));
+  const byId = id => CATS.find(c => c.id === id);
 
   /* ================================================================
      SMALL HELPERS
      ================================================================ */
   const $ = id => document.getElementById(id);
   const rand = arr => arr[Math.floor(Math.random() * arr.length)];
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
   const store = {
     get(k) { try { return localStorage.getItem(k); } catch { return null; } },
     set(k, v) { try { localStorage.setItem(k, v); } catch { /* private mode etc. */ } },
@@ -828,59 +1168,7 @@
   const t = (key, vars = {}) => String(I18N[lang][key]).replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? "");
 
   /* ================================================================
-     LO-FI AUDIO — synthesized with Web Audio, no files
-     ================================================================ */
-  const Sound = (() => {
-    let ctx, out, on = false, lastKey = 0;
-    function init() {
-      if (ctx) return;
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC) return;
-      ctx = new AC();
-      out = ctx.createGain();
-      out.gain.value = 0.6;
-      const soften = ctx.createBiquadFilter(); // roll off the harsh top end
-      soften.type = "lowpass";
-      soften.frequency.value = 2600;
-      out.connect(soften).connect(ctx.destination);
-    }
-    function tone(freq, { type = "square", dur = 0.05, vol = 0.04, at = 0, attack = 0.003 } = {}) {
-      if (!on || !ctx) return;
-      const t0 = ctx.currentTime + at;
-      const osc = ctx.createOscillator();
-      const g = ctx.createGain();
-      osc.type = type;
-      osc.frequency.setValueAtTime(freq, t0);
-      g.gain.setValueAtTime(0.0001, t0);
-      g.gain.exponentialRampToValueAtTime(vol, t0 + attack);
-      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-      osc.connect(g).connect(out);
-      osc.start(t0);
-      osc.stop(t0 + dur + 0.05);
-    }
-    // browsers only let audio start after a user gesture
-    const wake = () => ctx && ctx.state === "suspended" && ctx.resume();
-    ["pointerdown", "keydown"].forEach(e => addEventListener(e, wake));
-    return {
-      get on() { return on; },
-      set(v) { on = v; if (v) { init(); wake(); } },
-      key() {
-        const now = performance.now();
-        if (now - lastKey < 35) return;
-        lastKey = now;
-        tone(1300 + Math.random() * 700, { dur: 0.025, vol: 0.025 });
-      },
-      tick() { tone(1700 + Math.random() * 900, { dur: 0.018, vol: 0.01 }); },
-      send() { tone(660, { dur: 0.06, vol: 0.035 }); tone(990, { dur: 0.08, vol: 0.035, at: 0.06 }); },
-      chime({ type, notes, gap, vol }) {
-        notes.forEach((f, i) => tone(f, { type, dur: 1.1, vol, at: i * gap, attack: 0.012 }));
-      },
-      release() { this.chime({ type: "sine", notes: [523.25, 659.25, 783.99, 1046.5, 1318.5], gap: 0.16, vol: 0.055 }); },
-    };
-  })();
-
-  /* ================================================================
-     REPLY ENGINE
+     LOCAL REPLY ENGINE (always runs; it's also the offline fallback)
      Each cat walks its own 6-layer arc (personas.js → arc). Signals in
      the message (body, loops, stuck, choice, goodbye) jump straight to
      the matching layer for that turn. Lines come from shuffle bags so
@@ -920,6 +1208,60 @@
     if (L === "en") text = text.replaceAll("{word}", pickWord(msg));
     return { text, L, layer };
   }
+
+  /* ================================================================
+     LIVE CATS — Gemini via the Worker, with automatic fallback
+     ================================================================ */
+  let liveMode = store.get("meow.live") !== "off";
+  let liveState = "idle"; // idle | live | fallback
+  let cooldownUntil = 0;
+
+  async function askLive(cat, msg, layer, L) {
+    if (!liveMode || !navigator.onLine || Date.now() < cooldownUntil) return null;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), API_TIMEOUT_MS);
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: msg, cat: cat.id, history: cat.history.slice(-12), lang: L, layer }),
+        signal: ctrl.signal,
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      const data = await res.json();
+      const reply = typeof data.reply === "string" ? data.reply.trim().slice(0, 600) : "";
+      if (!reply) throw new Error("empty");
+      setLiveState("live");
+      return reply;
+    } catch (err) {
+      // rate-limited → back off a minute; offline/down → two minutes
+      cooldownUntil = Date.now() + (err.message === "429" ? 60_000 : 120_000);
+      setLiveState("fallback");
+      return null;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  function setLiveState(s) { liveState = s; renderLive(); }
+  function renderLive() {
+    const btn = $("liveBtn");
+    const state = !liveMode ? "off" : liveState;
+    btn.dataset.state = state;
+    $("liveLabel").textContent = t(liveMode ? "liveOn" : "liveOff");
+    const tip = !liveMode ? t("liveTipOff") : state === "fallback" ? t("liveTipFallback") : t("liveTipOn");
+    btn.title = tip;
+    btn.setAttribute("aria-label", tip);
+    btn.setAttribute("aria-pressed", String(liveMode));
+  }
+  $("liveBtn").addEventListener("click", () => {
+    liveMode = !liveMode;
+    store.set("meow.live", liveMode ? "on" : "off");
+    cooldownUntil = 0;
+    liveState = "idle";
+    renderLive();
+    sys(t(liveMode ? "sysLiveOn" : "sysLiveOff"));
+  });
 
   /* ================================================================
      DOM: build the room, roster and chips
@@ -972,8 +1314,10 @@
 
   $("sunIco").innerHTML = svg(SUN, { Y: "#c27a00", O: "#ff8a00" });
   $("cardSun").innerHTML = svg(SUN, { Y: "#ffb000", O: "#ffe347" });
+  $("flameIco").innerHTML = svg(FLAME, { F: "#ff5a36", O: "#ffa630", Y: "#ffe347" });
   $("soundIco").innerHTML = svg(SPEAKER_ON, { K: "#1a1030" }, "ico-on") + svg(SPEAKER_OFF, { K: "#1a1030" }, "ico-off");
   $("awayCats").innerHTML = CATS.map(c => svg(c.sprite, c.pal)).join("");
+  $("cardStar").innerHTML = STAR_SVG;
 
   function select(cat, focusInput) {
     selected = cat;
@@ -998,10 +1342,99 @@
     (group === room ? next.el : next.chip).focus();
   }));
 
+  /* ================================================================
+     ZEN NOTEBOOK — saved fortunes + favourite cat lines (localStorage)
+     ================================================================ */
+  const Notebook = (() => {
+    const KEY = "meow.notebook";
+    let items = [];
+    try { items = JSON.parse(store.get(KEY) || "[]"); } catch { items = []; }
+    if (!Array.isArray(items)) items = [];
+    items = items.filter(i => i && typeof i.id === "string" && typeof i.text === "string");
+    const persist = () => store.set(KEY, JSON.stringify(items.slice(0, 200)));
+    return {
+      get all() { return items; },
+      has: id => items.some(i => i.id === id),
+      add(entry) { if (!this.has(entry.id)) { items.unshift({ ...entry, savedAt: Date.now() }); persist(); } },
+      remove(id) { items = items.filter(i => i.id !== id); persist(); },
+    };
+  })();
+
+  function starButton(entry) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "star";
+    btn.dataset.id = entry.id;
+    btn.innerHTML = STAR_SVG;
+    btn.addEventListener("click", () => toggleSaved(entry));
+    syncStar(btn);
+    return btn;
+  }
+  function syncStar(btn) {
+    const saved = Notebook.has(btn.dataset.id);
+    btn.setAttribute("aria-pressed", String(saved));
+    btn.setAttribute("aria-label", t(saved ? "remove" : "save"));
+    btn.title = t(saved ? "remove" : "save");
+  }
+  function toggleSaved(entry) {
+    if (Notebook.has(entry.id)) Notebook.remove(entry.id);
+    else { Notebook.add(entry); A.chime({ type: "triangle", notes: [880, 1318.5], gap: 0.08, vol: 0.03 }); }
+    document.querySelectorAll(".star[data-id]").forEach(b => { if (b.dataset.id === entry.id) syncStar(b); });
+    renderNotebook();
+  }
+
+  function renderNotebook() {
+    const items = Notebook.all;
+    $("nbCount").textContent = items.length;
+    $("nbEmpty").hidden = items.length > 0;
+    $("nbGrid").replaceChildren(...items.map(item => {
+      const card = document.createElement("article");
+      card.className = "nb-card";
+      const head = document.createElement("div");
+      head.className = "nb-head";
+      const label = document.createElement("b");
+      if (item.kind === "cat") {
+        const cat = byId(item.cat);
+        label.textContent = cat ? cat.name : String(item.cat || "").toUpperCase();
+        if (cat) card.style.setProperty("--cat-color", cat.color);
+      } else {
+        label.textContent = `${t("fortuneLabel")} ${item.no || ""}`.trim();
+      }
+      const when = document.createElement("time");
+      const d = new Date(item.savedAt || Date.now());
+      when.dateTime = d.toISOString();
+      when.textContent = d.toLocaleDateString(lang === "zh" ? "zh-TW" : "en", { month: "short", day: "numeric" });
+      head.append(label, when);
+      const text = document.createElement("p");
+      text.textContent = item.text;
+      card.append(head, text);
+      if (item.kind === "fortune") {
+        if (Array.isArray(item.ritual) && item.ritual.length) {
+          const ul = document.createElement("ul");
+          item.ritual.forEach(r => ul.appendChild(Object.assign(document.createElement("li"), { textContent: String(r) })));
+          card.appendChild(ul);
+        }
+        if (item.lucky) card.appendChild(Object.assign(document.createElement("p"), { className: "nb-lucky", textContent: `${t("cardLucky")} ${item.lucky}` }));
+      }
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "winbtn nb-del";
+      del.textContent = "×";
+      del.setAttribute("aria-label", t("remove"));
+      del.addEventListener("click", () => toggleSaved(item));
+      card.appendChild(del);
+      return card;
+    }));
+  }
+
+  $("taskNotebook").addEventListener("click", () => {
+    $("notebook").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  });
+
   /* ---------- chat log ---------- */
   const clock = () => new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-  function addLine({ nick, text, color, kind }) {
+  function addLine({ nick, text, color, kind, cat }) {
     const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
     const line = document.createElement("p");
     line.className = "msg" + (kind ? " " + kind : "");
@@ -1017,6 +1450,7 @@
       line.appendChild(n);
     }
     line.appendChild(document.createTextNode(text));
+    if (cat) line.appendChild(starButton({ id: uid(), kind: "cat", cat: cat.id, text }));
     log.appendChild(line);
     if (atBottom || kind === "you") log.scrollTop = log.scrollHeight;
   }
@@ -1047,33 +1481,64 @@
     cat.bubbleTimer = setTimeout(() => cat.bubble.classList.remove("show"), 6500);
   }
 
-  function lightLamp(cat, layer) {
-    cat.lamps.forEach((l, i) => l.classList.toggle("on", i === layer));
+  const lightLamp = (cat, layer) => cat.lamps.forEach((l, i) => l.classList.toggle("on", i === layer));
+  // typing time scales with length; Mochi takes his time on purpose
+  const typingTime = (cat, text) => Math.min(4800, (500 + text.length * 20 + Math.random() * 700) * cat.pace);
+
+  function startTyping(cat) {
+    cat.pending++;
+    cat.el.classList.add("typing");
+    if (!cat.ticker) cat.ticker = setInterval(() => Math.random() < 0.55 && A.tick(), 120);
+    updateStatus();
+  }
+  function stopTyping(cat) {
+    cat.pending--;
+    if (cat.pending === 0) {
+      cat.el.classList.remove("typing");
+      clearInterval(cat.ticker);
+      cat.ticker = null;
+    }
+    updateStatus();
+  }
+  function deliver(cat, text, layer) {
+    addLine({ nick: cat.name, text, color: cat.color, cat });
+    speak(cat, text);
+    if (layer !== null && layer !== undefined) lightLamp(cat, layer);
+    A.chime(cat.chime);
   }
 
+  // scripted lines (greetings, nudges, welcome-backs)
   function catSays(cat, text, { delay = 0, layer = null, after, urgent = false } = {}) {
-    // typing time scales with length; Mochi takes his time on purpose
-    const typingMs = urgent ? 600 : Math.min(4800, (500 + text.length * 20 + Math.random() * 700) * cat.pace);
+    setTimeout(() => startTyping(cat), delay);
     setTimeout(() => {
-      cat.pending++;
-      cat.el.classList.add("typing");
-      if (!cat.ticker) cat.ticker = setInterval(() => Math.random() < 0.55 && Sound.tick(), 120);
-      updateStatus();
-    }, delay);
-    setTimeout(() => {
-      cat.pending--;
-      if (cat.pending === 0) {
-        cat.el.classList.remove("typing");
-        clearInterval(cat.ticker);
-        cat.ticker = null;
-      }
-      updateStatus();
-      addLine({ nick: cat.name, text, color: cat.color });
-      speak(cat, text);
-      if (layer !== null) lightLamp(cat, layer);
-      Sound.chime(cat.chime);
+      stopTyping(cat);
+      deliver(cat, text, layer);
       if (after) after();
-    }, delay + typingMs);
+    }, delay + (urgent ? 600 : typingTime(cat, text)));
+  }
+
+  // a real reply: the local engine picks the layer, Gemini (when live) writes the words
+  async function converse(cat, msg) {
+    const r = respond(cat, msg);
+    if (r.safety) { // never sent anywhere; fixed, sincere, fast
+      catSays(cat, r.text, { urgent: true, after: () => sys(P.SAFETY.sys[r.L], "care") });
+      return;
+    }
+    await sleep(250);
+    startTyping(cat);
+    const t0 = performance.now();
+    const live = await askLive(cat, msg, r.layer, r.L);
+    const text = live || r.text;
+    await sleep(Math.max(350, typingTime(cat, text) * (live ? 0.6 : 1) - (performance.now() - t0)));
+    stopTyping(cat);
+    deliver(cat, text, r.layer);
+    cat.history.push({ role: "user", text: msg }, { role: "model", text });
+    if (cat.history.length > 24) cat.history.splice(0, cat.history.length - 24);
+    // at the end of the arc, point gently at the exit (not every time)
+    if (r.layer === 5 && cat.state.turn - cat.state.hintedAt > 3) {
+      cat.state.hintedAt = cat.state.turn;
+      nudgeRelease(cat);
+    }
   }
 
   /* ---------- sending ---------- */
@@ -1086,7 +1551,7 @@
   }
 
   input.addEventListener("keydown", e => {
-    if (e.key.length === 1 || e.key === "Backspace") Sound.key();
+    if (e.key.length === 1 || e.key === "Backspace") A.key();
   });
 
   form.addEventListener("submit", e => {
@@ -1099,26 +1564,9 @@
       return;
     }
     input.value = "";
-    Sound.send();
+    A.send();
     addLine({ nick: t("you", { name: selected.name }), text: msg, kind: "you" });
-
-    const cat = selected;
-    const r = respond(cat, msg);
-    if (r.safety) {
-      catSays(cat, r.text, { urgent: true, after: () => sys(P.SAFETY.sys[r.L], "care") });
-      return;
-    }
-    catSays(cat, r.text, {
-      delay: 250,
-      layer: r.layer,
-      after: () => {
-        // at the end of the arc, point gently at the exit (not every time)
-        if (r.layer === 5 && cat.state.turn - cat.state.hintedAt > 3) {
-          cat.state.hintedAt = cat.state.turn;
-          nudgeRelease(cat);
-        }
-      },
-    });
+    converse(selected, msg);
   });
 
   /* ---------- window-button jokes ---------- */
@@ -1131,24 +1579,30 @@
      ================================================================ */
   const card = $("card"), away = $("away"), app = $("app");
   const pickN = (arr, n) => [...arr].sort(() => Math.random() - 0.5).slice(0, n);
+  let currentFortune = null;
 
   function openCard() {
     const S = I18N[lang];
-    $("cardNo").textContent = t("cardNo", { n: String(1 + Math.floor(Math.random() * 999)).padStart(3, "0") });
-    $("fortune").textContent = rand(S.fortunes);
-    $("ritual").replaceChildren(...pickN(S.rituals, 3).map(r => Object.assign(document.createElement("li"), { textContent: r })));
-    $("lucky").textContent = rand(S.lucky);
-    Sound.release();
+    const no = String(1 + Math.floor(Math.random() * 999)).padStart(3, "0");
+    currentFortune = { id: uid(), kind: "fortune", no, text: rand(S.fortunes), ritual: pickN(S.rituals, 3), lucky: rand(S.lucky) };
+    $("cardNo").textContent = t("cardNo", { n: no });
+    $("fortune").textContent = currentFortune.text;
+    $("ritual").replaceChildren(...currentFortune.ritual.map(r => Object.assign(document.createElement("li"), { textContent: r })));
+    $("lucky").textContent = currentFortune.lucky;
+    $("cardStar").dataset.id = currentFortune.id;
+    syncStar($("cardStar"));
+    A.release();
     card.showModal();
     $("cardGo").focus();
   }
+  $("cardStar").addEventListener("click", () => currentFortune && toggleSaved(currentFortune));
 
   let nudgeTimer;
   function armNudge() {
     clearTimeout(nudgeTimer);
     // after a long stretch, Mochi suggests a break, once
     nudgeTimer = setTimeout(() => {
-      const mochi = CATS.find(c => c.id === "mochi");
+      const mochi = byId("mochi");
       catSays(mochi, mochi.nudge[lang], { layer: 5, after: () => nudgeRelease(mochi) });
     }, 12 * 60 * 1000);
   }
@@ -1156,6 +1610,8 @@
   function goAway() {
     card.close();
     clearTimeout(nudgeTimer);
+    closePanel();
+    A.pauseAmbience();
     sys(t("sysStepped", { time: clock() }));
     app.inert = true;
     away.hidden = false;
@@ -1165,6 +1621,7 @@
   function comeBack() {
     away.hidden = true;
     app.inert = false;
+    A.resumeAmbience();
     sys(t("sysBack"));
     catSays(selected, rand(selected.back[lang]), { delay: 300, layer: 0 });
     CATS.forEach(c => { c.state.turn = 0; }); // fresh arc, fresh baseline
@@ -1176,11 +1633,145 @@
   $("cardGo").addEventListener("click", goAway);
   $("cardStay").addEventListener("click", () => card.close());
   $("cardX").addEventListener("click", () => card.close());
-  card.addEventListener("click", e => { if (e.target === card) card.close(); }); // click on backdrop
   $("awayBack").addEventListener("click", comeBack);
 
   /* ================================================================
-     LANGUAGE + SOUND TOGGLES
+     BURN THE THOUGHT — the text turns to embers and light, then Mochi
+     says one grounding line. Nothing is stored, logged or sent.
+     ================================================================ */
+  const dissolve = $("dissolve"), burn = $("burn"), thought = $("thought"), embers = $("embers");
+  let burning = false;
+
+  function openDissolve() {
+    $("mochiNoteSlot").replaceChildren();
+    thought.value = "";
+    dissolve.showModal();
+    thought.focus();
+  }
+
+  function burnThought() {
+    if (burning) return;
+    if (!thought.value.trim()) {
+      burn.classList.remove("shake");
+      void burn.offsetWidth;
+      burn.classList.add("shake");
+      thought.focus();
+      return;
+    }
+    burning = true;
+    $("mochiNoteSlot").replaceChildren();
+    const chars = [...thought.value];
+    const stagger = Math.min(18, 900 / chars.length);
+    embers.replaceChildren(...chars.map((ch, i) => {
+      if (ch === "\n") return document.createElement("br");
+      const s = document.createElement("span");
+      s.className = "ch";
+      s.textContent = ch;
+      s.style.setProperty("--d", `${Math.round(i * stagger + Math.random() * 180)}ms`);
+      s.style.setProperty("--dx", `${Math.round(Math.random() * 60 - 30)}px`);
+      s.style.setProperty("--dy", `${Math.round(-40 - Math.random() * 110)}px`);
+      return s;
+    }));
+    // pixel sparkles rising out of the text
+    const box = burn.getBoundingClientRect();
+    const colors = ["#ffe347", "#ffffff", "#ffb000", "#ff9ecf", "#8be9fd"];
+    for (let i = 0; i < 46; i++) {
+      const sp = document.createElement("i");
+      sp.className = "spark";
+      sp.style.left = `${Math.random() * (box.width - 8)}px`;
+      sp.style.top = `${20 + Math.random() * (box.height - 30)}px`;
+      sp.style.setProperty("--c", rand(colors));
+      sp.style.setProperty("--d", `${Math.round(Math.random() * 1300)}ms`);
+      sp.style.setProperty("--dx", `${Math.round(Math.random() * 50 - 25)}px`);
+      sp.style.setProperty("--dy", `${Math.round(-30 - Math.random() * 90)}px`);
+      embers.appendChild(sp);
+    }
+    burn.classList.add("burning");
+    thought.value = ""; // the words only live in the embers now
+    A.shimmer();
+
+    const total = Math.min(chars.length * stagger + 180 + 1500 + 200, 3600);
+    setTimeout(() => {
+      embers.replaceChildren();
+      burn.classList.remove("burning");
+      burning = false;
+      const mochi = byId("mochi");
+      const note = document.createElement("p");
+      note.className = "mochi-note";
+      note.innerHTML = svg(mochi.sprite, mochi.pal);
+      const words = document.createElement("span");
+      const b = document.createElement("b");
+      b.textContent = "MOCHI: ";
+      b.style.color = "#2f8f45";
+      words.append(b, rand(I18N[lang].mochiNotes));
+      note.appendChild(words);
+      $("mochiNoteSlot").replaceChildren(note);
+      A.chime(mochi.chime);
+    }, total);
+  }
+
+  $("dissolveBtn").addEventListener("click", openDissolve);
+  $("dissolveGo").addEventListener("click", burnThought);
+  $("dissolveX").addEventListener("click", () => dissolve.close());
+  thought.addEventListener("keydown", e => {
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); burnThought(); }
+    else if (e.key.length === 1 || e.key === "Backspace") A.key();
+  });
+  dissolve.addEventListener("close", () => { thought.value = ""; }); // don't keep it around
+
+  // clicking the dimmed backdrop closes either dialog
+  [card, dissolve].forEach(d => d.addEventListener("click", e => { if (e.target === d) d.close(); }));
+
+  /* ================================================================
+     AMBIENCE PANEL
+     ================================================================ */
+  const panel = $("ambience"), soundBtn = $("soundBtn"), vol = $("vol");
+
+  function renderAudio() {
+    const s = A.state;
+    vol.value = Math.round(s.volume * 100);
+    panel.querySelectorAll(".tog").forEach(b => b.setAttribute("aria-pressed", String(!!s[b.dataset.ch])));
+    soundBtn.dataset.on = String(A.anyOn);
+  }
+  function openPanel() { panel.hidden = false; soundBtn.setAttribute("aria-expanded", "true"); panel.querySelector(".tog").focus(); }
+  function closePanel() { panel.hidden = true; soundBtn.setAttribute("aria-expanded", "false"); }
+
+  soundBtn.addEventListener("click", () => (panel.hidden ? openPanel() : closePanel()));
+  $("ambX").addEventListener("click", () => { closePanel(); soundBtn.focus(); });
+  panel.querySelectorAll(".tog").forEach(b => b.addEventListener("click", () => {
+    const ch = b.dataset.ch;
+    A.set(ch, !A.state[ch]);
+    if (ch === "sfx" && A.state.sfx) A.chime(selected.chime);
+  }));
+  vol.addEventListener("input", () => A.setVolume(vol.value / 100));
+  document.addEventListener("pointerdown", e => {
+    if (!panel.hidden && !panel.contains(e.target) && !soundBtn.contains(e.target)) closePanel();
+  });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && !panel.hidden) { closePanel(); soundBtn.focus(); }
+  });
+  A.onChange(renderAudio);
+
+  /* ================================================================
+     THEMES
+     ================================================================ */
+  const THEMES = ["midnight", "sunset", "matcha", "rose"];
+  const themeSel = $("theme");
+  let theme = THEMES.includes(store.get("meow.theme")) ? store.get("meow.theme") : "midnight";
+  function applyTheme(next) {
+    theme = next;
+    document.documentElement.dataset.theme = theme;
+    themeSel.value = theme;
+    store.set("meow.theme", theme);
+  }
+  function renderThemeOptions() {
+    themeSel.replaceChildren(...THEMES.map(id => Object.assign(document.createElement("option"), { value: id, textContent: I18N[lang].themes[id] })));
+    themeSel.value = theme;
+  }
+  themeSel.addEventListener("change", () => applyTheme(themeSel.value));
+
+  /* ================================================================
+     LANGUAGE
      ================================================================ */
   const visitor = String(1000000 + Math.floor(Math.random() * 999999)).slice(1);
 
@@ -1195,11 +1786,17 @@
     room.setAttribute("aria-label", t("roomLabel"));
     to.setAttribute("aria-label", t("toLabel"));
     log.setAttribute("aria-label", t("logLabel"));
+    thought.placeholder = t("dissolvePlaceholder");
+    soundBtn.title = t("sound");
+    $("dissolveBtn").title = t("dissolve");
     CATS.forEach(c => {
       c.el.setAttribute("aria-label", t("talkTo", { name: c.name }));
       c.bioEl.textContent = c.bio[lang];
     });
-    renderSound();
+    document.querySelectorAll(".star[data-id]").forEach(syncStar);
+    renderThemeOptions();
+    renderNotebook();
+    renderLive();
     select(selected, false);
     if (announce) {
       sys(t("sysLang"));
@@ -1207,20 +1804,9 @@
     }
   }
 
-  function renderSound() {
-    $("soundBtn").setAttribute("aria-pressed", String(Sound.on));
-    $("soundLabel").textContent = t(Sound.on ? "soundOn" : "soundOff");
-  }
-
   document.querySelectorAll("#langGroup button").forEach(b =>
     b.addEventListener("click", () => { if (b.dataset.lang !== lang) applyLang(b.dataset.lang, true); })
   );
-  $("soundBtn").addEventListener("click", () => {
-    Sound.set(!Sound.on);
-    store.set("meow.sound", Sound.on ? "on" : "off");
-    renderSound();
-    if (Sound.on) Sound.chime(selected.chime);
-  });
 
   /* ---------- tray clock ---------- */
   const tick = () => { $("clock").textContent = clock(); };
@@ -1228,12 +1814,15 @@
   setInterval(tick, 10000);
 
   /* ---------- boot ---------- */
-  if (store.get("meow.sound") === "on") Sound.set(true); // starts silent until first click/keypress
+  applyTheme(theme);
   applyLang(lang, false);
+  renderAudio();
+  A.restore(); // saved ambience resumes after the first click/keypress
   select(CATS[0], false);
   sys(t("sysJoined"));
   sys(t("sysHere", { names: CATS.map(c => c.name).join(", ") }));
   sys(t("sysHint"));
+  sys(t(liveMode ? "sysLiveOn" : "sysLiveOff"));
   CATS.forEach((cat, i) => catSays(cat, rand(cat.greet[lang]), { delay: 500 + i * 1400, layer: 0 }));
   armNudge();
 })();
