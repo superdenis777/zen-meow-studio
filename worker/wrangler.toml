@@ -8,9 +8,9 @@ ALLOWED_ORIGINS = "https://superdenis777.github.io"
 # Optional. Defaults to gemini-3.8-flash. If Google retires it, its error message
 # names the replacement: set that here (or in the dashboard) and redeploy.
 # GEMINI_MODEL = "gemini-3.8-flash"
-# Optional second model, tried only when the first is overloaded (503 "high demand").
-# Pick any current model from Google AI Studio.
-# GEMINI_FALLBACK_MODEL = ""
+# Backup model, used only when the main one is overloaded or slow.
+# Defaults to gemini-3.5-flash-lite; "none" turns the backup off.
+# GEMINI_FALLBACK_MODEL = "gemini-3.5-flash-lite"
 
 # The Gemini key is a secret, never a var:
 #   npx wrangler secret put GEMINI_API_KEY

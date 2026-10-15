@@ -39,10 +39,14 @@ const DEFAULT_ORIGINS = ["https://superdenis777.github.io"];
 
 const LIMITS = { prompt: 500, turns: 12, turnChars: 600, reply: 600 };
 
-// Gemini overload / hiccup statuses worth retrying ("high demand" is a 503)
+// Gemini overload / hiccup statuses ("high demand" is a 503). Free-tier keys
+// are deprioritised first, and re-asking the same busy model mostly adds
+// waiting, so on these we switch to a lighter backup model instead.
 const RETRYABLE = new Set([500, 502, 503, 504]);
-const RETRY_WAITS_MS = [800, 2000];
-const sleep = ms => new Promise(r => setTimeout(r, ms));
+// Override with GEMINI_FALLBACK_MODEL ("none" disables the backup).
+const DEFAULT_FALLBACK_MODEL = "gemini-3.5-flash-lite";
+// Per-attempt cap: primary + backup must finish before the page gives up (22 s).
+const ATTEMPT_TIMEOUT_MS = 8000;
 
 const LAYERS = [
   { en: "Unconditioned Baseline", zh: "無條件的原點" },
@@ -227,31 +231,42 @@ export default {
     const input = validate(body);
     if (input.error) return json(input, 400, cors);
 
-    const call = (withThinking, useModel = model) => fetch(endpointFor(useModel), {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: systemPrompt(input.cat, input.lang, input.layer) }] },
-        contents: input.contents,
-        generationConfig: generationConfigFor(useModel, withThinking),
-      }),
-    });
+    // one Gemini attempt; a slow attempt counts as a 504 instead of hanging
+    const call = async (withThinking, useModel = model) => {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), ATTEMPT_TIMEOUT_MS);
+      try {
+        return await fetch(endpointFor(useModel), {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: systemPrompt(input.cat, input.lang, input.layer) }] },
+            contents: input.contents,
+            generationConfig: generationConfigFor(useModel, withThinking),
+          }),
+          signal: ctrl.signal,
+        });
+      } catch (err) {
+        if (err.name === "AbortError") return json({ error: { message: `no answer from ${useModel} within ${ATTEMPT_TIMEOUT_MS / 1000}s` } }, 504, {});
+        throw err;
+      } finally {
+        clearTimeout(timer);
+      }
+    };
 
     let res;
     try {
-      let thinking = true;
-      res = await call(thinking);
+      res = await call(true);
       // if this model rejects our thinking settings, ask again without them
-      if (res.status === 400) { thinking = false; res = await call(thinking); }
-      // overloaded ("high demand") or hiccup: back off briefly and retry
-      for (const wait of RETRY_WAITS_MS) {
-        if (!RETRYABLE.has(res.status)) break;
-        await sleep(wait);
-        res = await call(thinking);
+      if (res.status === 400) res = await call(false);
+      // busy or slow: hand the turn to the lighter backup model
+      const backup = String(env.GEMINI_FALLBACK_MODEL ?? DEFAULT_FALLBACK_MODEL).trim();
+      if (RETRYABLE.has(res.status) && backup && backup !== "none" && backup !== model) {
+        const first = res;
+        res = await call(true, backup);
+        if (res.status === 400) res = await call(false, backup);
+        if (!res.ok) res = first; // report the main model's error, not the backup's
       }
-      // still overloaded: optionally try a second model
-      const backup = String(env.GEMINI_FALLBACK_MODEL || "").trim();
-      if (RETRYABLE.has(res.status) && backup && backup !== model) res = await call(thinking, backup);
     } catch {
       return json({ error: "upstream unreachable", retryable: true }, 502, cors);
     }

@@ -66,7 +66,7 @@ If the taskbar light turns amber, the chat log prints the reason once, the light
    - `network or CORS blocked`: the Worker didn't answer, or the origin isn't allowed.
    - `HTTP 502 … Gemini 404 … not found` or `no longer available to new users`: the model is retired. Google's message names the replacement, so set `GEMINI_MODEL` to it. (`gemini-1.5-*` is gone, and `gemini-2.5-flash` is closed to new keys.)
    - `HTTP 429`: you're over your Gemini quota.
-   - `Gemini 503 … high demand`: Google is overloaded. The Worker already retried twice, and the page tries live again after 8 seconds. Setting `GEMINI_FALLBACK_MODEL` gives it a second model to try.
+   - `Gemini 503 … high demand` or `timeout`: Google is overloaded. Free-tier keys are served last. The Worker hands the turn to a lighter backup model (`GEMINI_FALLBACK_MODEL`, default `gemini-3.5-flash-lite`), and the page tries live again after 8 seconds. Turning on billing for the key in Google AI Studio (paid tier) is the real fix.
    - `HTTP 503`: no key is configured.
 3. `npx wrangler tail` streams the Worker's logs, including Gemini's error messages.
 
