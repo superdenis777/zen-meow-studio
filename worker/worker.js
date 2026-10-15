@@ -11,13 +11,17 @@
    - Crisis messages never reach this Worker: the page handles them
      locally with a fixed reply and real crisis lines.
    - Any non-200 response makes the page fall back to its local engine.
+   - GET / is a health check: open the Worker URL in a browser to see the
+     model, whether the key is set, and which origins are allowed.
 
    Deploy: see README.md → "Live cats (Cloudflare Worker + Gemini)".
    Keep FRAMEWORK and CATS in sync with personas.js.
    ===================================================================== */
 
-const MODEL = "gemini-2.5-flash";
-const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+// Gemini 1.5 models are retired and return 404. Override with the
+// GEMINI_MODEL variable if you need a different current model.
+const DEFAULT_MODEL = "gemini-2.5-flash";
+const endpointFor = model => `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
 
 // Override with the ALLOWED_ORIGINS variable (comma-separated).
 // Add "null" there if you want it to answer a page opened from disk.
@@ -148,14 +152,17 @@ function validate(body) {
 
 /* ---------------- HTTP plumbing ---------------- */
 
+// "https://Example.io/" and "https://example.io" are the same origin
+const normOrigin = s => String(s || "").trim().replace(/\/+$/, "").toLowerCase();
+
 function corsHeaders(origin, allowed) {
   const h = {
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
   };
-  if (allowed.includes(origin)) h["Access-Control-Allow-Origin"] = origin;
+  if (allowed.includes(normOrigin(origin))) h["Access-Control-Allow-Origin"] = origin;
   return h;
 }
 
@@ -165,14 +172,19 @@ const json = (data, status, headers) =>
 export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
-    const allowed = env.ALLOWED_ORIGINS ? env.ALLOWED_ORIGINS.split(",").map(s => s.trim()) : DEFAULT_ORIGINS;
+    const allowed = (env.ALLOWED_ORIGINS ? env.ALLOWED_ORIGINS.split(",") : DEFAULT_ORIGINS).map(normOrigin).filter(Boolean);
     const cors = corsHeaders(origin, allowed);
+    const model = String(env.GEMINI_MODEL || DEFAULT_MODEL).trim();
 
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
+    if (request.method === "GET") {
+      // health check, no secrets: is this deployment wired up correctly?
+      return json({ ok: true, service: "zen-meow-api", model, keyConfigured: Boolean(env.GEMINI_API_KEY), allowedOrigins: allowed, rateLimiter: Boolean(env.RATE_LIMITER) }, 200, cors);
+    }
     if (request.method !== "POST") return json({ error: "method not allowed" }, 405, cors);
     // Origin checks stop other websites from using this from a browser.
     // They don't stop scripts; that's what the rate limiter is for.
-    if (!allowed.includes(origin)) return json({ error: "origin not allowed" }, 403, cors);
+    if (!allowed.includes(normOrigin(origin))) return json({ error: "origin not allowed", origin }, 403, cors);
 
     if (env.RATE_LIMITER) {
       const key = request.headers.get("CF-Connecting-IP") || "anon";
@@ -182,14 +194,15 @@ export default {
 
     if (!env.GEMINI_API_KEY) return json({ error: "not configured" }, 503, cors);
 
+    // The page sends JSON as text/plain (no CORS preflight), so parse the text.
     let body;
-    try { body = await request.json(); } catch { return json({ error: "invalid json" }, 400, cors); }
+    try { body = JSON.parse(await request.text()); } catch { return json({ error: "invalid json" }, 400, cors); }
     const input = validate(body);
     if (input.error) return json(input, 400, cors);
 
     let res;
     try {
-      res = await fetch(ENDPOINT, {
+      res = await fetch(endpointFor(model), {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
         body: JSON.stringify({
@@ -206,17 +219,24 @@ export default {
       return json({ error: "upstream unreachable" }, 502, cors);
     }
 
-    if (res.status === 429) return json({ error: "upstream rate limited" }, 429, cors);
-    if (!res.ok) return json({ error: "upstream error", status: res.status }, 502, cors);
+    if (!res.ok) {
+      // Pass Gemini's own message along (it never contains the key) so the
+      // page's console and `wrangler tail` say exactly what went wrong.
+      const detail = String((await res.json().catch(() => null))?.error?.message || "").slice(0, 300);
+      console.log(`gemini ${model} → ${res.status}: ${detail}`);
+      return json({ error: res.status === 429 ? "upstream rate limited" : "upstream error", status: res.status, model, detail }, res.status === 429 ? 429 : 502, cors);
+    }
 
     const data = await res.json().catch(() => null);
+    const blocked = data?.promptFeedback?.blockReason;
+    if (blocked) return json({ error: "blocked by safety filter", detail: blocked }, 422, cors);
     const reply = (data?.candidates?.[0]?.content?.parts || [])
       .map(p => p.text || "")
       .join("")
       .replace(/[*_#`]/g, "") // belt and braces: no markdown in a pixel chat log
       .trim()
       .slice(0, LIMITS.reply);
-    if (!reply) return json({ error: "empty reply" }, 502, cors);
+    if (!reply) return json({ error: "empty reply", detail: data?.candidates?.[0]?.finishReason || "" }, 502, cors);
 
     return json({ reply }, 200, cors);
   },

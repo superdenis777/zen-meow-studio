@@ -5,6 +5,8 @@ compatibility_date = "2025-06-01"
 [vars]
 # Comma-separated. Add "null" to also allow the page opened straight from disk.
 ALLOWED_ORIGINS = "https://superdenis777.github.io"
+# Optional. Defaults to gemini-2.5-flash. (Gemini 1.5 models are retired and return 404.)
+# GEMINI_MODEL = "gemini-2.5-flash"
 
 # The Gemini key is a secret, never a var:
 #   npx wrangler secret put GEMINI_API_KEY

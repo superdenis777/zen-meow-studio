@@ -54,6 +54,21 @@ npx wrangler deploy                          # → https://zen-meow-api.<your-su
 - **Recommended:** turn on the per-IP rate limit in `wrangler.toml`. An origin check stops other websites, not scripts.
 - `FRAMEWORK` and the cat personas are duplicated in `worker/worker.js` and `personas.js`. Keep them in sync.
 
+### Troubleshooting live cats
+
+If the taskbar light turns amber, the chat log prints the reason once, the light's tooltip shows it, and the browser console logs it too.
+
+1. Open the Worker URL in a browser. It should show `{"ok":true, "model":"gemini-2.5-flash", "keyConfigured":true, "allowedOrigins":["https://superdenis777.github.io"]}`.
+   - `keyConfigured: false`: run `npx wrangler secret put GEMINI_API_KEY`.
+   - `allowedOrigins` doesn't list the site: fix `ALLOWED_ORIGINS`.
+   - A wrong model, or no JSON at all: the deployed code isn't this repo's `worker/worker.js`. Redeploy with `npx wrangler deploy`.
+2. Here's what the reasons mean:
+   - `network or CORS blocked`: the Worker didn't answer, or the origin isn't allowed.
+   - `HTTP 502 … Gemini 404 … not found`: the model name is wrong or retired. `gemini-1.5-*` no longer exists.
+   - `HTTP 429`: you're over your Gemini quota.
+   - `HTTP 503`: no key is configured.
+3. `npx wrangler tail` streams the Worker's logs, including Gemini's error messages.
+
 ## Top bar
 
 - **EN / 繁中**: switches the whole UI and the cats' language. Cats also reply in whatever language you type.
