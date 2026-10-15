@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MeowChat 2003</title>
-<!-- Pixel fonts. If you're offline the page falls back to monospace and still works. -->
+<!-- Pixel fonts. DotGothic16 covers Traditional Chinese. Offline, everything falls back to system fonts and still works. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
 <style>
   :root {
     --desk: #1fb5ad;
@@ -23,16 +23,24 @@
     --sys: #8be9fd;
     --you: #ffe347;
     --lime: #39ff14;
+    --sun: #ffb000;
     --wall-a: #ffd7f0;
     --wall-b: #ffc4e6;
     --floor-a: #7fd4ff;
     --floor-b: #5ec0f2;
-    --pixel: "Press Start 2P", "Courier New", monospace;
-    --term: "VT323", "Courier New", monospace;
+    --cjk: "DotGothic16", "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+    --pixel: "Press Start 2P", var(--cjk);
+    --term: "VT323", var(--cjk);
+    --fs-xs: 8px;
+    --fs-s: 9px;
+    --fs-m: 11px;
     --sprite: 5px; /* size of one cat pixel */
   }
+  /* CJK glyphs need more pixels than Press Start 2P to stay legible */
+  html[lang="zh-Hant"] { --fs-xs: 11px; --fs-s: 12px; --fs-m: 14px; }
 
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
 
   html, body { margin: 0; min-height: 100%; }
 
@@ -46,8 +54,56 @@
     color: var(--ink);
     font-family: var(--term);
     font-size: 20px;
-    padding: 16px 16px 64px;
+    padding: 0 0 64px;
   }
+  .page { padding: 16px; }
+
+  /* ---------- Top menu bar ---------- */
+  .menubar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 10px;
+    background: #d9d0ea;
+    border-bottom: 3px solid #fff;
+    box-shadow: 0 3px 0 var(--ink);
+    font-family: var(--pixel);
+    font-size: var(--fs-s);
+  }
+  .mb-brand { margin-right: auto; white-space: nowrap; font-size: 9px; }
+  .mb-brand b { color: var(--title-b); }
+  .mb-btn, .seg button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 8px;
+    font-family: var(--pixel);
+    font-size: var(--fs-s);
+    color: var(--ink);
+    background: #fff;
+    border: 2px solid var(--ink);
+    box-shadow: inset -2px -2px 0 var(--bevel-lo);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .mb-btn:active, .seg button:active { box-shadow: inset 2px 2px 0 var(--bevel-lo); }
+  .seg { display: inline-flex; }
+  .seg button + button { border-left: 0; }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: #fff; box-shadow: none; }
+  .seg button[data-lang="zh"] { font-family: var(--cjk); font-size: 13px; }
+  .mb-btn[aria-pressed="true"] { background: var(--lime); }
+  .ico svg { display: block; width: 18px; height: 18px; }
+  #soundBtn .ico-off { display: none; }
+  #soundBtn[aria-pressed="false"] .ico-on { display: none; }
+  #soundBtn[aria-pressed="false"] .ico-off { display: block; }
+  .release { background: var(--you); }
+  .release .short { display: none; }
+  .release.nudge { animation: nudge .5s steps(2) 8; }
+  @keyframes nudge { 50% { background: var(--sun); transform: translateY(-2px); } }
 
   /* ---------- Banner ---------- */
   .banner {
@@ -82,9 +138,10 @@
   .marquee span {
     display: inline-block;
     padding-left: 100%;
-    animation: scroll 22s linear infinite;
+    animation: scroll 30s linear infinite;
   }
   @keyframes scroll { to { transform: translateX(-100%); } }
+  html[lang="zh-Hant"] .marquee { font-size: 18px; }
 
   .badges {
     display: flex;
@@ -95,7 +152,7 @@
   }
   .badge {
     font-family: var(--pixel);
-    font-size: 8px;
+    font-size: var(--fs-xs);
     line-height: 1.6;
     padding: 4px 6px;
     background: #fff;
@@ -132,7 +189,7 @@
     background: linear-gradient(90deg, var(--title-a), var(--title-b));
     color: #fff;
     font-family: var(--pixel);
-    font-size: 11px;
+    font-size: var(--fs-m);
     border-bottom: 3px solid var(--ink);
     text-shadow: 2px 2px 0 var(--ink);
   }
@@ -158,7 +215,6 @@
     position: relative;
     border: 3px solid var(--ink);
     overflow: hidden;
-    /* wallpaper on top 55%, checker floor below */
     background:
       repeating-linear-gradient(90deg, var(--wall-a) 0 16px, var(--wall-b) 16px 32px) top / 100% 55% no-repeat,
       repeating-conic-gradient(var(--floor-a) 0 25%, var(--floor-b) 0 50%) 0 0 / 32px 32px;
@@ -183,7 +239,7 @@
     background: var(--ink);
     color: var(--you);
     font-family: var(--pixel);
-    font-size: 8px;
+    font-size: var(--fs-xs);
     padding: 6px 8px;
     border: 3px solid #fff;
     box-shadow: 3px 3px 0 var(--ink);
@@ -220,12 +276,13 @@
   @keyframes hop { 50% { transform: translateY(-4px); } }
 
   .rig { position: relative; width: calc(22 * var(--sprite)); height: calc(23 * var(--sprite)); }
-  .rig svg { position: absolute; display: block; image-rendering: pixelated; }
+  .rig svg { position: absolute; display: block; }
   .rig .sprite { left: 0; top: 0; width: calc(22 * var(--sprite)); height: calc(21 * var(--sprite)); }
   .rig .laptop { left: calc(4 * var(--sprite)); bottom: 0; width: calc(14 * var(--sprite)); height: calc(9 * var(--sprite)); }
 
   .cat.typing .sprite { animation: bob .36s steps(2) infinite; }
   .cat.typing .laptop { animation: jiggle .18s steps(2) infinite; }
+  .cat.slow.typing .sprite { animation-duration: .7s; }
   @keyframes bob { 50% { transform: translateY(calc(-1 * var(--sprite))); } }
   @keyframes jiggle { 50% { transform: translateX(1px); } }
 
@@ -252,6 +309,11 @@
   }
   .cat[aria-checked="true"] .nameplate { background: var(--cat-color); color: var(--ink); border-color: var(--ink); }
 
+  /* six tiny lamps: where this cat is on its arc */
+  .lamps { display: flex; gap: 3px; margin-top: 5px; }
+  .lamps i { width: 7px; height: 7px; background: rgba(26, 16, 48, .25); border: 1px solid var(--ink); }
+  .lamps i.on { background: var(--cat-color); box-shadow: 0 0 6px var(--cat-color); }
+
   .bubble {
     position: absolute;
     bottom: calc(100% - 4px);
@@ -273,6 +335,7 @@
     pointer-events: none;
     z-index: 2;
   }
+  html[lang="zh-Hant"] .bubble { font-size: 13px; line-height: 1.3; }
   .bubble::after {
     content: "";
     position: absolute;
@@ -293,6 +356,7 @@
     gap: 8px;
   }
   .roster p { margin: 0; line-height: 1.1; }
+  html[lang="zh-Hant"] .roster p { font-size: 16px; line-height: 1.4; }
   .roster b { font-family: var(--pixel); font-size: 9px; color: var(--ink); background: var(--cat-color); padding: 2px 4px; border: 2px solid var(--ink); margin-right: 6px; }
 
   /* ---------- Chat ---------- */
@@ -308,11 +372,12 @@
     line-height: 1.15;
     scrollbar-color: var(--title-b) var(--log-bg);
   }
+  html[lang="zh-Hant"] .log { font-size: 17px; line-height: 1.4; }
   .msg { margin: 0 0 6px; overflow-wrap: anywhere; }
   .msg .time { color: #6f6a99; }
-  .msg .nick { font-weight: normal; }
   .msg.sys { color: var(--sys); }
   .msg.you .nick { color: var(--you); }
+  .msg.care { color: #ffd1e8; }
 
   .status {
     height: 26px;
@@ -326,6 +391,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
+  html[lang="zh-Hant"] .status { font-size: 15px; }
 
   .to {
     display: flex;
@@ -334,7 +400,7 @@
     gap: 6px;
     margin-bottom: 8px;
     font-family: var(--pixel);
-    font-size: 9px;
+    font-size: var(--fs-s);
   }
   .chip {
     font-family: var(--pixel);
@@ -348,10 +414,7 @@
   }
   .chip[aria-checked="true"] { background: var(--cat-color); transform: translate(2px, 2px); box-shadow: none; }
 
-  .prompt {
-    display: flex;
-    gap: 8px;
-  }
+  .prompt { display: flex; gap: 8px; }
   .field {
     flex: 1;
     min-width: 0;
@@ -376,13 +439,14 @@
     font-size: 22px;
     padding: 6px 0;
   }
+  html[lang="zh-Hant"] .field input { font-size: 17px; }
   .field input::placeholder { color: #3f7a3a; }
   .field:focus-within { outline: 3px dashed var(--title-a); outline-offset: 2px; }
 
   .send {
     flex: none;
     font-family: var(--pixel);
-    font-size: 11px;
+    font-size: var(--fs-m);
     padding: 0 14px;
     color: var(--ink);
     background: var(--you);
@@ -394,6 +458,67 @@
 
   .shake { animation: shake .3s steps(4); }
   @keyframes shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+
+  /* ---------- Release card ---------- */
+  .card {
+    width: min(380px, calc(100% - 32px));
+    max-height: calc(100% - 32px);
+    padding: 0;
+    color: var(--ink);
+    background: var(--win);
+    border: 3px solid var(--ink);
+    box-shadow: inset 3px 3px 0 #fff, inset -3px -3px 0 var(--bevel-lo), 8px 8px 0 var(--ink);
+  }
+  .card[open] { animation: flip .32s steps(4); }
+  @keyframes flip { from { transform: perspective(600px) rotateY(90deg); } }
+  .card::backdrop {
+    background: repeating-conic-gradient(rgba(13, 11, 42, .75) 0 25%, rgba(13, 11, 42, .55) 0 50%) 0 0 / 4px 4px;
+  }
+  .card-body { padding: 16px 18px 18px; text-align: center; }
+  .card-no { font-family: var(--pixel); font-size: var(--fs-xs); color: var(--title-b); }
+  .card-sun { width: 66px; height: 66px; margin: 12px auto; }
+  .card-sun svg { width: 100%; height: 100%; display: block; animation: spin 8s steps(8) infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .fortune {
+    margin: 0 0 14px;
+    padding: 10px;
+    font-size: 24px;
+    line-height: 1.1;
+    background: #fff;
+    border: 2px dashed var(--title-a);
+  }
+  html[lang="zh-Hant"] .fortune { font-size: 19px; line-height: 1.45; }
+  .card h3 { margin: 0 0 6px; font-family: var(--pixel); font-size: var(--fs-xs); font-weight: normal; }
+  .ritual { margin: 0 0 12px; padding: 0; list-style: none; text-align: left; }
+  .ritual li { padding: 3px 0 3px 22px; position: relative; line-height: 1.1; }
+  html[lang="zh-Hant"] .ritual li { font-size: 16px; line-height: 1.4; }
+  .ritual li::before { content: ""; position: absolute; left: 2px; top: 8px; width: 9px; height: 9px; background: var(--lime); border: 2px solid var(--ink); }
+  .lucky { margin: 0 0 16px; }
+  html[lang="zh-Hant"] .lucky { font-size: 16px; }
+  .card-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+  .card-actions .send { padding: 10px 14px; }
+  .card-actions .chip { font-size: var(--fs-s); padding: 10px 12px; }
+
+  /* ---------- Stepped-away screen ---------- */
+  .away {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    background: repeating-conic-gradient(#0d0b2a 0 25%, #151236 0 50%) 0 0 / 4px 4px;
+    color: #e9e6ff;
+    text-align: center;
+  }
+  .away-box { max-width: 460px; }
+  .away-cats { display: flex; justify-content: center; gap: 10px; opacity: .55; filter: saturate(.5); }
+  .away-cats svg { width: 66px; height: 63px; }
+  .zzz { margin: 4px 0 12px; color: var(--sys); font-size: 26px; animation: blink 2s steps(1) infinite; }
+  .away h2 { margin: 0 0 10px; font-family: var(--pixel); font-size: var(--fs-m); color: var(--you); font-weight: normal; line-height: 1.6; }
+  .away p { margin: 0 0 20px; line-height: 1.2; }
+  html[lang="zh-Hant"] .away p { font-size: 17px; line-height: 1.5; }
+  .away .send { padding: 10px 16px; }
 
   /* ---------- Taskbar ---------- */
   .taskbar {
@@ -407,19 +532,19 @@
     border-top: 3px solid #fff;
     box-shadow: 0 -3px 0 var(--ink);
     font-family: var(--pixel);
-    font-size: 9px;
+    font-size: var(--fs-s);
     z-index: 10;
   }
   .start {
     font-family: var(--pixel);
-    font-size: 10px;
+    font-size: var(--fs-m);
     padding: 6px 10px;
     background: var(--lime);
     border: 2px solid var(--ink);
     box-shadow: inset 2px 2px 0 #c6ffb8, inset -2px -2px 0 #1d8a0a;
     cursor: pointer;
   }
-  .tray { margin-left: auto; padding: 6px 8px; border: 2px solid var(--bevel-lo); box-shadow: inset 2px 2px 0 var(--bevel-lo); background: #efe6ff; white-space: nowrap; }
+  .tray { margin-left: auto; padding: 6px 8px; border: 2px solid var(--bevel-lo); box-shadow: inset 2px 2px 0 var(--bevel-lo); background: #efe6ff; white-space: nowrap; font-size: 9px; }
   .task { padding: 6px 8px; border: 2px solid var(--ink); background: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -429,11 +554,15 @@
     .desktop { grid-template-columns: minmax(0, 1fr); }
     .log { height: 300px; }
   }
+  @media (max-width: 560px) {
+    .release .full { display: none; }
+    .release .short { display: inline; }
+    #soundLabel { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  }
   @media (max-width: 480px) {
     :root { --sprite: 3.5px; }
     body { font-size: 18px; }
     .room { padding-top: 84px; }
-    .poster { font-size: 7px; }
     .bubble { font-size: 15px; }
     .nameplate { font-size: 6px; }
     .task { display: none; }
@@ -441,77 +570,129 @@
 
   @media (prefers-reduced-motion: reduce) {
     .marquee span { animation: none; padding-left: 8px; }
-    .cat.typing .sprite, .cat.typing .laptop, .cat[aria-checked="true"] .arrow, .blink { animation: none; }
+    .cat.typing .sprite, .cat.typing .laptop, .cat[aria-checked="true"] .arrow, .blink,
+    .release.nudge, .card[open], .card-sun svg, .zzz { animation: none; }
   }
 </style>
 </head>
 <body>
 
-<header class="banner">
-  <h1 class="logo">MEOWCHAT 2003<span class="blink">_</span></h1>
-  <div class="marquee" aria-hidden="true"><span>
-    ★ WELCOME 2 MEOWCHAT ★ 3 CATS ONLINE ★ 0 DOGS ALLOWED ★ please do not feed the hacker ★ lady meowington's lounge is VIP only ★ gary has been asleep since tuesday ★ sign our guestbook ★
-  </span></div>
-  <div class="badges" aria-hidden="true">
-    <span class="badge net">best viewed in Netscape 4 @ 800x600</span>
-    <span class="badge hot">you are visitor #<span id="visitor">0001337</span></span>
-    <span class="badge">powered by tuna</span>
-  </div>
-</header>
-
-<main class="desktop">
-
-  <!-- Lobby: the cats -->
-  <section class="window" aria-labelledby="lobby-title">
-    <div class="titlebar">
-      <span class="icon" aria-hidden="true"></span>
-      <span class="title" id="lobby-title">Lobby — The Cat Lounge</span>
-      <button class="winbtn" type="button" aria-label="Minimize" data-joke>_</button>
-      <button class="winbtn" type="button" aria-label="Maximize" data-joke>□</button>
-      <button class="winbtn" type="button" aria-label="Close" data-joke>×</button>
+<div id="app">
+  <nav class="menubar" aria-label="MeowChat">
+    <span class="mb-brand">MeowChat <b>v2</b></span>
+    <div class="seg" role="group" id="langGroup">
+      <button type="button" data-lang="en">EN</button>
+      <button type="button" data-lang="zh" lang="zh-Hant">繁中</button>
     </div>
-    <div class="winbody">
-      <div class="room" id="room" role="radiogroup" aria-label="Pick a cat to talk to">
-        <div class="poster" aria-hidden="true">NO DOGS · NO REFUNDS</div>
+    <button type="button" class="mb-btn" id="soundBtn" aria-pressed="false">
+      <span class="ico" id="soundIco"></span><span id="soundLabel"></span>
+    </button>
+    <button type="button" class="mb-btn release" id="releaseBtn" aria-haspopup="dialog">
+      <span class="ico" id="sunIco"></span><span class="full" data-i18n="release"></span><span class="short" data-i18n="releaseShort"></span>
+    </button>
+  </nav>
+
+  <div class="page">
+    <header class="banner">
+      <h1 class="logo">MEOWCHAT 2003<span class="blink">_</span></h1>
+      <div class="marquee" aria-hidden="true"><span data-i18n="marquee"></span></div>
+      <div class="badges" aria-hidden="true">
+        <span class="badge net" data-i18n="badgeBrowser"></span>
+        <span class="badge hot" id="visitor"></span>
+        <span class="badge" data-i18n="badgeTuna"></span>
       </div>
-      <div class="roster" id="roster"></div>
-    </div>
-  </section>
+    </header>
 
-  <!-- Chat -->
-  <section class="window" aria-labelledby="chat-title">
-    <div class="titlebar">
-      <span class="icon" aria-hidden="true"></span>
-      <span class="title" id="chat-title">#meowchat</span>
-      <button class="winbtn" type="button" aria-label="Minimize" data-joke>_</button>
-      <button class="winbtn" type="button" aria-label="Maximize" data-joke>□</button>
-      <button class="winbtn" type="button" aria-label="Close" data-joke>×</button>
-    </div>
-    <div class="winbody">
-      <div class="log" id="log" role="log" aria-live="polite" aria-label="Chat log"></div>
-      <div class="status" id="status" aria-live="polite">&nbsp;</div>
-      <div class="to" id="to" role="radiogroup" aria-label="Send to">To:</div>
-      <form class="prompt" id="form" autocomplete="off">
-        <div class="field">
-          <label for="input">C:\MEOW&gt;</label>
-          <input id="input" type="text" maxlength="200" placeholder="type something to a cat..." autofocus>
+    <main class="desktop">
+      <!-- Lobby: the cats -->
+      <section class="window" aria-labelledby="lobby-title">
+        <div class="titlebar">
+          <span class="icon" aria-hidden="true"></span>
+          <span class="title" id="lobby-title" data-i18n="lobbyTitle"></span>
+          <button class="winbtn" type="button" aria-label="Minimize" data-joke>_</button>
+          <button class="winbtn" type="button" aria-label="Maximize" data-joke>□</button>
+          <button class="winbtn" type="button" aria-label="Close" data-joke>×</button>
         </div>
-        <button class="send" type="submit">SEND</button>
-      </form>
+        <div class="winbody">
+          <div class="room" id="room" role="radiogroup">
+            <div class="poster" aria-hidden="true" data-i18n="poster"></div>
+          </div>
+          <div class="roster" id="roster"></div>
+        </div>
+      </section>
+
+      <!-- Chat -->
+      <section class="window" aria-labelledby="chat-title">
+        <div class="titlebar">
+          <span class="icon" aria-hidden="true"></span>
+          <span class="title" id="chat-title">#meowchat</span>
+          <button class="winbtn" type="button" aria-label="Minimize" data-joke>_</button>
+          <button class="winbtn" type="button" aria-label="Maximize" data-joke>□</button>
+          <button class="winbtn" type="button" aria-label="Close" data-joke>×</button>
+        </div>
+        <div class="winbody">
+          <div class="log" id="log" role="log" aria-live="polite"></div>
+          <div class="status" id="status" aria-live="polite">&nbsp;</div>
+          <div class="to" id="to" role="radiogroup"><span data-i18n="to"></span></div>
+          <form class="prompt" id="form" autocomplete="off">
+            <div class="field">
+              <label for="input">C:\MEOW&gt;</label>
+              <input id="input" type="text" maxlength="200" autofocus>
+            </div>
+            <button class="send" type="submit" data-i18n="send"></button>
+          </form>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer class="taskbar">
+    <button class="start" type="button" data-joke data-i18n="start"></button>
+    <span class="task" data-i18n="taskChat"></span>
+    <span class="task" data-i18n="taskLobby"></span>
+    <span class="tray"><span id="clock">--:--</span></span>
+  </footer>
+</div>
+
+<!-- Release / Ground Me: pixel fortune card -->
+<dialog class="card" id="card" aria-labelledby="card-title">
+  <div class="titlebar">
+    <span class="icon" aria-hidden="true"></span>
+    <span class="title" id="card-title" data-i18n="cardTitle"></span>
+    <button class="winbtn" type="button" id="cardX" aria-label="Close">×</button>
+  </div>
+  <div class="card-body">
+    <div class="card-no" id="cardNo"></div>
+    <div class="card-sun" id="cardSun" aria-hidden="true"></div>
+    <p class="fortune" id="fortune"></p>
+    <h3 data-i18n="cardRitual"></h3>
+    <ol class="ritual" id="ritual"></ol>
+    <p class="lucky"><span data-i18n="cardLucky"></span> <b id="lucky"></b></p>
+    <div class="card-actions">
+      <button class="send" type="button" id="cardGo" data-i18n="cardGo"></button>
+      <button class="chip" type="button" id="cardStay" data-i18n="cardStay"></button>
     </div>
-  </section>
+  </div>
+</dialog>
 
-</main>
+<!-- Shown after "I'm going" -->
+<div class="away" id="away" hidden>
+  <div class="away-box">
+    <div class="away-cats" id="awayCats" aria-hidden="true"></div>
+    <p class="zzz" aria-hidden="true">z z z</p>
+    <h2 data-i18n="awayTitle"></h2>
+    <p data-i18n="awayBody"></p>
+    <button class="send" type="button" id="awayBack" data-i18n="awayBack"></button>
+  </div>
+</div>
 
-<footer class="taskbar">
-  <button class="start" type="button" data-joke>Start</button>
-  <span class="task">#meowchat</span>
-  <span class="task">The Cat Lounge</span>
-  <span class="tray"><span id="clock">--:--</span></span>
-</footer>
-
+<script src="personas.js"></script>
+<script src="i18n.js"></script>
 <script>
 (() => {
+  const P = window.MEOW_PERSONAS;
+  const I18N = window.MEOW_I18N;
+
   /* ================================================================
      PIXEL SPRITES
      Each sprite is a grid of characters; every char maps to a color.
@@ -553,9 +734,31 @@
     ".KKKKKKKKKKKK.",
   ];
 
+  const SUN = [
+    ".....Y.....",
+    ".Y...Y...Y.",
+    "..Y.....Y..",
+    "....OOO....",
+    "...OOOOO...",
+    "YY.OOOOO.YY",
+    "...OOOOO...",
+    "....OOO....",
+    "..Y.....Y..",
+    ".Y...Y...Y.",
+    ".....Y.....",
+  ];
+  const SPEAKER_ON = [
+    "...K.....", "..KK..K..", "KKKK...K.", "KKKK.K.K.",
+    "KKKK.K.K.", "KKKK...K.", "..KK..K..", "...K.....",
+  ];
+  const SPEAKER_OFF = [
+    "...K.....", "..KK.....", "KKKK.K.K.", "KKKK..K..",
+    "KKKK.K.K.", "KKKK.....", "..KK.....", "...K.....",
+  ];
+
   const patch = (rows, changes) => rows.map((r, i) => changes[i] ?? r);
 
-  function svg(rows, pal, cls) {
+  function svg(rows, pal, cls = "") {
     const h = rows.length;
     const w = Math.max(...rows.map(r => r.length));
     let rects = "";
@@ -567,20 +770,23 @@
     return `<svg class="${cls}" viewBox="0 0 ${w} ${h}" shape-rendering="crispEdges" aria-hidden="true">${rects}</svg>`;
   }
 
-  /* ================================================================
-     THE CATS
-     lines    – the general pool, drawn at random without repeats
-     triggers – keyword pools; used ~70% of the time when they match
-     {word}   – replaced with a random word from your message
-     ================================================================ */
-  const CATS = [
-    {
-      id: "byte",
-      name: "BYTE.EXE",
-      short: "BYTE",
-      color: "#ff9f1c",
-      bio: "Hacker. Paranoid. Still on dial-up. Trusts no red dot.",
-      pal: { K: "#1a1030", O: "#ff9f1c", S: "#d9700a", W: "#fff3dd", P: "#ff8fb8", E: "#fff", X: "#1a1030", w: "#ffffff", G: "#151515", g: "#39ff14" },
+  // Look + sound for each persona (the words live in personas.js)
+  const LOOKS = {
+    mochi: {
+      pal: { K: "#1a1030", O: "#f3e9d8", W: "#ffffff", P: "#ff9fc2", E: "#fff", X: "#1a1030", w: "#c9b8d9", L: "#3ccf4e", l: "#1f8a32" },
+      lid: "#3c8f62",
+      sprite: patch(BASE_CAT, {
+        0: "........LL............", // a sprout. he's growing.
+        1: "..K.....LLl......K....",
+        2: "..KOK.....l....KOK....",
+        3: "..KPOK....l...KOPK....",
+        7: ".KOOOOOOOOOOOOOOOOK...", // eyes: peacefully closed
+        8: ".KOOKKKOOOOOOKKKOOK...",
+      }),
+      chime: { type: "sine", notes: [392, 523.25, 659.25], gap: 0.2, vol: 0.06 },
+    },
+    nox: {
+      pal: { K: "#1a1030", O: "#4a4478", S: "#383262", W: "#8a83b8", P: "#ff8fb8", E: "#fff", X: "#1a1030", w: "#ffffff", G: "#0e0e14", g: "#39ff14" },
       lid: "#2b2b3b",
       sprite: patch(BASE_CAT, {
         5: ".KOOOOSOSSOSOOOOOOK...",
@@ -588,216 +794,145 @@
         7: ".KOGGGGGKKKKGGGGGOK...", // shades on, always
         8: ".KOGgGGGOOOOGgGGGOK...",
       }),
-      greet: "*** connection established. a/s/l? i'm 4/cat/ur keyboard",
-      lines: [
-        "hold on, someone picked up the phone. *EEEEE-KSSSHHH* ok go",
-        "i hacked the fridge. it's mostly mustard. we've been lied to.",
-        "'{word}'? that's exactly what the Dog Government wants you to type.",
-        "my uptime is 14 naps. personal record.",
-        "i don't trust the red dot. it moves when i move. coincidence? no.",
-        "downloading more RAM... 3%... 3%... 3%... ok it's a sock now",
-        "brb, knocking a 56k modem off the desk for science",
-        "my password is ********. it's 'tuna' but with stars because i'm secure",
-        "error 404: treat not found. insert treat and press any paw",
-        "i've seen the source code of the universe. it's 90% box.",
-        "the cursor keeps blinking at me. either it's flirting or it's morse code. both bad.",
-        "ran a traceroute on your message. it went through 3 routers and a hairball.",
-        "lol. that's lowercase for 'licking own leg'.",
-        "i'm not paranoid. the vacuum is. it's always running.",
-        "sudo give me the warm laundry",
-        "i've backed up '{word}' to a floppy. the floppy is under the couch. forever.",
-        "my firewall is a real wall. i sit on it. nothing gets through.",
-        "every time you type, a server in finland purrs. i don't make the rules.",
-      ],
-      triggers: [
-        { re: /\b(hi|hello|hey|yo|sup|hai|hiya|howdy)\b/i, lines: [
-          "hey. are you a cop. you have to tell me if you're a cop.",
-          "hi. i've already cracked your firewall. it was a cardboard box. nice.",
-          "a/s/l? jk i know where you are. you're at your computer. creepy right",
-        ]},
-        { re: /(food|hungry|eat|tuna|treat|snack|fish|dinner|breakfast|lunch)/i, lines: [
-          "food.exe has stopped responding. refill bowl and restart.",
-          "i encrypted my treat stash. the key was also a treat. i ate the key.",
-          "tuna is just ocean data. i'm a data guy.",
-        ]},
-        { re: /(dog|puppy|pupper|woof|bark)/i, lines: [
-          "dogs still use IE6. that's how i know they can't be trusted.",
-          "a dog? on THIS network? *chews through ethernet cable*",
-        ]},
-        { re: /(computer|code|hack|bug|program|internet|wifi|password|virus|pc)/i, lines: [
-          "have you tried turning the human off and on again",
-          "i wrote a virus once. it just knocks pens off desks. very effective.",
-          "my code has no bugs. i ate them all. crunchy.",
-        ]},
-        { re: /\?\s*$/, lines: [
-          "the answer is in the mainframe. the mainframe is under the couch.",
-          "can't say. they're listening. (the roomba)",
-          "yes. no. 404. pick one, i'm busy hacking the thermostat",
-        ]},
-      ],
+      chime: { type: "square", notes: [659.25, 493.88], gap: 0.09, vol: 0.025 },
     },
-    {
-      id: "lady",
-      name: "LADY MEOWINGTON",
-      short: "LADY M",
-      color: "#ff6fc0",
-      bio: "Lobby diva. Owns 40 rare furnis. Sleeps in the box they came in.",
-      pal: { K: "#1a1030", O: "#fff3f8", W: "#ffffff", P: "#ff8fb8", E: "#5ad1ff", X: "#1a1030", w: "#c9b8d9", A: "#ff2e88", N: "#ffd1e8" },
-      lid: "#ff6fc0",
+    kiki: {
+      pal: { K: "#1a1030", O: "#e3d3ff", W: "#ffffff", P: "#ff8fb8", E: "#ffd23f", X: "#1a1030", w: "#ffffff", H: "#5b3bd6", h: "#3d24a8", y: "#ffe347" },
+      lid: "#5b3bd6",
       sprite: patch(BASE_CAT, {
-        0: ".AA.AA................", // a bow. naturally.
-        1: ".AAAAA...........K....",
+        0: "..........H...........", // a wizard hat, with a star
+        1: "..K......HHH.....K....",
+        2: "..KOK...HHyHH..KOK....",
+        3: "..KPOK.HHHHHHHKOPK....",
+        4: "..KPOhhhhhhhhhhOPK....",
         6: ".KOOKOKOOOOOOKOKOOK...", // lashes
-        13: "...KKNONONONONOKK...K.", // pearls
       }),
-      greet: "*glides across the lobby* Charmed, I'm sure. Do wipe your paws.",
-      lines: [
-        "Darling. Darling. Daaaarling. Anyway, no.",
-        "I'd respond properly, but my rare throne-furni is being polished.",
-        "I traded three pixel sofas and my dignity for this lounge. Worth it.",
-        "Oh, '{word}'. How terribly common. I adore it.",
-        "Bring me water. Not THAT water. The same water, but in a different glass.",
-        "I was not knocked off anything. I simply chose the floor.",
-        "You may address me as Lady, Your Floofiness, or Floor Monarch.",
-        "I went to a pool party in 2004. I didn't swim. I stared at the pool until it apologized.",
-        "Ugh, the lighting in here is SO 256-color.",
-        "You may pet me exactly once. Starting... no. Changed my mind.",
-        "Fetch me a cardboard box from Paris. The French ones are crunchier.",
-        "My bed cost 40 credits. I sleep next to it, in the box it came in.",
-        "Hush. I'm writing a sonnet about the sunbeam. Line one: 'warm.' Line two: 'mine.'",
-        "Your message has been received by my secretary, who is also me, but in a smaller hat.",
-        "'{word}'... I shall have that embroidered on a cushion and then ignore the cushion.",
-        "I don't chase lasers, darling. Lasers come to ME.",
-      ],
-      triggers: [
-        { re: /\b(hi|hello|hey|yo|sup|hai|hiya|howdy)\b/i, lines: [
-          "Charmed, I'm sure. Bow at a 45° angle, darling.",
-          "Oh! A visitor. Mind the carpet, it's a rare.",
-          "Hello, hello. You may kiss the air near my paw.",
-        ]},
-        { re: /(food|hungry|eat|tuna|treat|snack|fish|dinner|breakfast|lunch)/i, lines: [
-          "I only dine on things arranged in the shape of a tiny pixel heart.",
-          "Caviar? Pfft. Bring me the crunchy dust at the bottom of the bag. The DUST, darling.",
-          "I'm on a strict diet of whatever you're eating right now.",
-        ]},
-        { re: /(dog|puppy|pupper|woof|bark)/i, lines: [
-          "A dog? In MY lounge? Call security. Security is also a cat. He's asleep.",
-          "Dogs are simply cats who failed charm school.",
-        ]},
-        { re: /(love|cute|pretty|beautiful|gorgeous|adorable|queen)/i, lines: [
-          "I know, darling. I KNOW. Say it again, slower.",
-          "Flattery accepted. Please resubmit in writing, with glitter.",
-        ]},
-        { re: /\?\s*$/, lines: [
-          "What an impertinent question. The answer is yes, obviously. Now give me that.",
-          "Ask my secretary. She's also me, but in a smaller hat.",
-        ]},
-      ],
+      chime: { type: "triangle", notes: [1046.5, 1318.5, 1568, 2093], gap: 0.07, vol: 0.045 },
     },
-    {
-      id: "gary",
-      name: "ZEN GARY",
-      short: "GARY",
-      color: "#7fe08a",
-      bio: "Office cat. Philosopher. Has been 'defragmenting' since Tuesday.",
-      pal: { K: "#1a1030", O: "#9aa3b8", W: "#e8ecf5", P: "#ff8fb8", E: "#e8ecf5", X: "#1a1030", w: "#ffffff", L: "#3ccf4e", l: "#1f8a32" },
-      lid: "#3c8f62",
-      sprite: patch(BASE_CAT, {
-        0: "........LL............", // a sprout. he's growing.
-        1: "..K.....LLl......K....",
-        2: "..KOK.....l....KOK....",
-        3: "..KPOK....l...KOPK....",
-        7: ".KOOOOOOOOOOOOOOOOK...", // eyes: closed. always.
-        8: ".KOOKKKOOOOOOKKKOOK...",
-      }),
-      greet: "heyyy. welcome to the present moment. it's carpeted.",
-      lines: [
-        "dude... what if the box is thinking inside of us",
-        "i've been staring at this wall for 4 hours. we're friends now.",
-        "'{word}', huh. heavy. let's lie down on that for a bit.",
-        "the dot... it was never red. we were red. all along.",
-        "not all who wander are lost. some are looking for the warm spot on the router.",
-        "my boss asked for the report. i sat on the keyboard. it's in there somewhere.",
-        "you can't knock the glass off the table if you ARE the table. *exhales*",
-        "breathe in... *smells tuna*... breathe out... *still smells tuna*",
-        "napping isn't lazy, man. it's defragmenting.",
-        "every meow is a tiny haiku. most of them say 'food.' that's ok.",
-        "be the water bowl. accept what fills you.",
-        "i tried mindfulness once. then a moth happened.",
-        "time is a flat circle. like a cat bed. ...hang on. time is a cat bed.",
-        "zzz... oh, hey. i was meditating. with my eyes closed. and snoring.",
-        "there is no 9-to-5. there's only 5pm somewhere, and also nap.",
-        "'{word}'... i'm gonna think about that for a while. *closes eyes for 3 hours*",
-      ],
-      triggers: [
-        { re: /\b(hi|hello|hey|yo|sup|hai|hiya|howdy)\b/i, lines: [
-          "oh hi... i was just here. being here. you know how it is.",
-          "*slow blink* that means hello in cat. also 'i see your soul'. mostly hello.",
-        ]},
-        { re: /(food|hungry|eat|tuna|treat|snack|fish|dinner|breakfast|lunch)/i, lines: [
-          "hunger is just the universe asking you to open a can, man.",
-          "i ate breakfast. then i ate breakfast again. time is weird.",
-          "the bowl is half empty. the bowl is half full. the bowl is, like, a bowl.",
-        ]},
-        { re: /(dog|puppy|pupper|woof|bark)/i, lines: [
-          "dogs are just cats who chose enthusiasm. respect.",
-          "the dog barks. the cloud passes. i keep napping. this is the way.",
-        ]},
-        { re: /(sad|tired|stress|anxious|bored|lonely|help|ugh|work)/i, lines: [
-          "hey. stretch your arms, drink some water, look out a real window for a sec. the screen'll still be here.",
-          "you know what fixes that? ten minutes in a sunbeam. it's free. no login required.",
-          "be like a cat: go knock something small off a table. (a sock. not a vase.)",
-        ]},
-        { re: /\?\s*$/, lines: [
-          "the answer is... *falls asleep mid-sentence*",
-          "dude. what if the question is the answer. what if i'm hungry.",
-          "mm. ask the sunbeam. it knows things.",
-        ]},
-      ],
-    },
-  ];
+  };
+
+  const CATS = P.CATS.map(c => ({ ...c, ...LOOKS[c.id], state: { turn: 0, hintedAt: -99 }, pending: 0 }));
 
   /* ================================================================
-     REPLY PICKER – shuffle bags so you don't get the same line twice
-     ================================================================ */
-  function draw(pool) {
-    if (!pool._bag || pool._bag.length === 0) {
-      const bag = [...pool.lines];
-      for (let i = bag.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [bag[i], bag[j]] = [bag[j], bag[i]];
-      }
-      if (bag.length > 1 && bag[bag.length - 1] === pool._last) bag.unshift(bag.pop());
-      pool._bag = bag;
-    }
-    pool._last = pool._bag.pop();
-    return pool._last;
-  }
-
-  function reply(cat, msg) {
-    const trigger = cat.triggers.find(t => t.re.test(msg));
-    const pool = trigger && Math.random() < 0.7 ? trigger : cat;
-    const words = msg.match(/[\p{L}\p{N}']{3,}/gu) || [];
-    const word = words.length ? words[Math.floor(Math.random() * words.length)].toLowerCase() : "that";
-    return draw(pool).replaceAll("{word}", word);
-  }
-
-  /* ================================================================
-     DOM
+     SMALL HELPERS
      ================================================================ */
   const $ = id => document.getElementById(id);
+  const rand = arr => arr[Math.floor(Math.random() * arr.length)];
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch { /* private mode etc. */ } },
+  };
+  const hasHan = s => /\p{Script=Han}/u.test(s);
+
+  let lang = store.get("meow.lang") || ((navigator.language || "").toLowerCase().startsWith("zh") ? "zh" : "en");
+  const t = (key, vars = {}) => String(I18N[lang][key]).replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? "");
+
+  /* ================================================================
+     LO-FI AUDIO — synthesized with Web Audio, no files
+     ================================================================ */
+  const Sound = (() => {
+    let ctx, out, on = false, lastKey = 0;
+    function init() {
+      if (ctx) return;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      ctx = new AC();
+      out = ctx.createGain();
+      out.gain.value = 0.6;
+      const soften = ctx.createBiquadFilter(); // roll off the harsh top end
+      soften.type = "lowpass";
+      soften.frequency.value = 2600;
+      out.connect(soften).connect(ctx.destination);
+    }
+    function tone(freq, { type = "square", dur = 0.05, vol = 0.04, at = 0, attack = 0.003 } = {}) {
+      if (!on || !ctx) return;
+      const t0 = ctx.currentTime + at;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t0);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(vol, t0 + attack);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.connect(g).connect(out);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.05);
+    }
+    // browsers only let audio start after a user gesture
+    const wake = () => ctx && ctx.state === "suspended" && ctx.resume();
+    ["pointerdown", "keydown"].forEach(e => addEventListener(e, wake));
+    return {
+      get on() { return on; },
+      set(v) { on = v; if (v) { init(); wake(); } },
+      key() {
+        const now = performance.now();
+        if (now - lastKey < 35) return;
+        lastKey = now;
+        tone(1300 + Math.random() * 700, { dur: 0.025, vol: 0.025 });
+      },
+      tick() { tone(1700 + Math.random() * 900, { dur: 0.018, vol: 0.01 }); },
+      send() { tone(660, { dur: 0.06, vol: 0.035 }); tone(990, { dur: 0.08, vol: 0.035, at: 0.06 }); },
+      chime({ type, notes, gap, vol }) {
+        notes.forEach((f, i) => tone(f, { type, dur: 1.1, vol, at: i * gap, attack: 0.012 }));
+      },
+      release() { this.chime({ type: "sine", notes: [523.25, 659.25, 783.99, 1046.5, 1318.5], gap: 0.16, vol: 0.055 }); },
+    };
+  })();
+
+  /* ================================================================
+     REPLY ENGINE
+     Each cat walks its own 6-layer arc (personas.js → arc). Signals in
+     the message (body, loops, stuck, choice, goodbye) jump straight to
+     the matching layer for that turn. Lines come from shuffle bags so
+     nothing repeats back to back.
+     ================================================================ */
+  const bags = new WeakMap();
+  function draw(lines) {
+    let bag = bags.get(lines);
+    if (!bag || bag.items.length === 0) {
+      const items = [...lines];
+      for (let i = items.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [items[i], items[j]] = [items[j], items[i]];
+      }
+      if (bag && items.length > 1 && items[items.length - 1] === bag.last) items.unshift(items.pop());
+      bag = { items, last: null };
+      bags.set(lines, bag);
+    }
+    bag.last = bag.items.pop();
+    return bag.last;
+  }
+
+  function pickWord(msg) {
+    const words = (msg.match(/[\p{L}\p{N}']{3,}/gu) || []).filter(w => w.length <= 16 && !hasHan(w));
+    return words.length ? rand(words).toLowerCase() : "that";
+  }
+
+  function respond(cat, msg) {
+    const L = hasHan(msg) ? "zh" : lang; // answer in the language they wrote in
+    const signal = P.SIGNALS.find(s => s.re.test(msg));
+    if (signal && signal.layer === "safety") return { text: P.SAFETY.reply[L], L, safety: true };
+
+    const natural = cat.arc[cat.state.turn % cat.arc.length];
+    const layer = signal ? signal.layer : natural;
+    cat.state.turn++;
+    let text = draw(cat.lines[layer][L]);
+    if (L === "en") text = text.replaceAll("{word}", pickWord(msg));
+    return { text, L, layer };
+  }
+
+  /* ================================================================
+     DOM: build the room, roster and chips
+     ================================================================ */
   const room = $("room"), roster = $("roster"), to = $("to"), log = $("log");
   const status = $("status"), form = $("form"), input = $("input"), title = $("chat-title");
 
   let selected = CATS[0];
 
   CATS.forEach(cat => {
-    cat.pending = 0;
-
-    // cat in the room
     const el = document.createElement("button");
     el.type = "button";
-    el.className = "cat";
+    el.className = "cat" + (cat.pace > 1.2 ? " slow" : "");
     el.setAttribute("role", "radio");
     el.style.setProperty("--cat-color", cat.color);
     el.innerHTML = `
@@ -808,33 +943,37 @@
         ${svg(LAPTOP, { K: "#1a1030", L: cat.lid, F: "#ffffff", D: "#c9c3d6" }, "laptop")}
       </span>
       <span class="shadow" aria-hidden="true"></span>
-      <span class="nameplate"></span>`;
+      <span class="nameplate"></span>
+      <span class="lamps" aria-hidden="true">${"<i></i>".repeat(6)}</span>`;
     el.querySelector(".nameplate").textContent = cat.name;
-    el.setAttribute("aria-label", `Talk to ${cat.name}`);
     el.addEventListener("click", () => select(cat, true));
     room.appendChild(el);
     cat.el = el;
     cat.bubble = el.querySelector(".bubble");
+    cat.lamps = [...el.querySelectorAll(".lamps i")];
 
-    // bio line
     const p = document.createElement("p");
     p.style.setProperty("--cat-color", cat.color);
     p.innerHTML = "<b></b><span></span>";
     p.querySelector("b").textContent = cat.name;
-    p.querySelector("span").textContent = cat.bio;
     roster.appendChild(p);
+    cat.bioEl = p.querySelector("span");
 
-    // "To:" chip
     const chip = document.createElement("button");
     chip.type = "button";
     chip.className = "chip";
     chip.setAttribute("role", "radio");
     chip.style.setProperty("--cat-color", cat.color);
-    chip.textContent = cat.short;
+    chip.textContent = cat.name;
     chip.addEventListener("click", () => select(cat, true));
     to.appendChild(chip);
     cat.chip = chip;
   });
+
+  $("sunIco").innerHTML = svg(SUN, { Y: "#c27a00", O: "#ff8a00" });
+  $("cardSun").innerHTML = svg(SUN, { Y: "#ffb000", O: "#ffe347" });
+  $("soundIco").innerHTML = svg(SPEAKER_ON, { K: "#1a1030" }, "ico-on") + svg(SPEAKER_OFF, { K: "#1a1030" }, "ico-off");
+  $("awayCats").innerHTML = CATS.map(c => svg(c.sprite, c.pal)).join("");
 
   function select(cat, focusInput) {
     selected = cat;
@@ -844,8 +983,8 @@
       c.chip.setAttribute("aria-checked", on);
       c.el.tabIndex = c.chip.tabIndex = c === cat ? 0 : -1;
     });
-    title.textContent = `#meowchat — whispering to ${cat.name}`;
-    input.placeholder = `say something to ${cat.name}...`;
+    title.textContent = t("chatTitle", { name: cat.name });
+    input.placeholder = t("placeholder", { name: cat.name });
     if (focusInput) input.focus();
   }
 
@@ -866,10 +1005,10 @@
     const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
     const line = document.createElement("p");
     line.className = "msg" + (kind ? " " + kind : "");
-    const t = document.createElement("span");
-    t.className = "time";
-    t.textContent = `[${clock()}] `;
-    line.appendChild(t);
+    const time = document.createElement("span");
+    time.className = "time";
+    time.textContent = `[${clock()}] `;
+    line.appendChild(time);
     if (nick) {
       const n = document.createElement("span");
       n.className = "nick";
@@ -881,17 +1020,15 @@
     log.appendChild(line);
     if (atBottom || kind === "you") log.scrollTop = log.scrollHeight;
   }
-
-  const sys = text => addLine({ text: "*** " + text, kind: "sys" });
+  const sys = (text, kind = "sys") => addLine({ text: "*** " + text, kind });
 
   /* ---------- typing + speech ---------- */
   function updateStatus() {
-    const typing = CATS.filter(c => c.pending > 0);
+    const typing = CATS.filter(c => c.pending > 0).map(c => c.name);
     status.textContent = "";
     if (!typing.length) { status.innerHTML = "&nbsp;"; return; }
-    const names = typing.map(c => c.name);
-    const who = names.length === 1 ? names[0] : names.slice(0, -1).join(", ") + " & " + names.at(-1);
-    status.append(`${who} ${names.length === 1 ? "is" : "are"} typing`);
+    const who = typing.length === 1 ? typing[0] : typing.slice(0, -1).join(", ") + t("and") + typing.at(-1);
+    status.append(t(typing.length === 1 ? "typingOne" : "typingMany", { who }));
     const cur = document.createElement("span");
     cur.className = "blink";
     cur.textContent = "▌";
@@ -901,33 +1038,57 @@
   function speak(cat, text) {
     cat.bubble.textContent = "";
     const b = document.createElement("b");
-    b.textContent = cat.short + ": ";
+    b.textContent = cat.name + ": ";
     const says = document.createElement("span");
     says.append(b, text);
     cat.bubble.append(says);
     cat.bubble.classList.add("show");
     clearTimeout(cat.bubbleTimer);
-    cat.bubbleTimer = setTimeout(() => cat.bubble.classList.remove("show"), 5500);
+    cat.bubbleTimer = setTimeout(() => cat.bubble.classList.remove("show"), 6500);
   }
 
-  function catSays(cat, text, extraDelay = 0) {
-    // typing time scales with reply length, plus a little "thinking" jitter
-    const delay = Math.min(3400, 600 + text.length * 22 + Math.random() * 800) + extraDelay;
+  function lightLamp(cat, layer) {
+    cat.lamps.forEach((l, i) => l.classList.toggle("on", i === layer));
+  }
+
+  function catSays(cat, text, { delay = 0, layer = null, after, urgent = false } = {}) {
+    // typing time scales with length; Mochi takes his time on purpose
+    const typingMs = urgent ? 600 : Math.min(4800, (500 + text.length * 20 + Math.random() * 700) * cat.pace);
     setTimeout(() => {
       cat.pending++;
       cat.el.classList.add("typing");
+      if (!cat.ticker) cat.ticker = setInterval(() => Math.random() < 0.55 && Sound.tick(), 120);
       updateStatus();
-    }, extraDelay);
+    }, delay);
     setTimeout(() => {
       cat.pending--;
-      if (cat.pending === 0) cat.el.classList.remove("typing");
+      if (cat.pending === 0) {
+        cat.el.classList.remove("typing");
+        clearInterval(cat.ticker);
+        cat.ticker = null;
+      }
       updateStatus();
       addLine({ nick: cat.name, text, color: cat.color });
       speak(cat, text);
-    }, delay);
+      if (layer !== null) lightLamp(cat, layer);
+      Sound.chime(cat.chime);
+      if (after) after();
+    }, delay + typingMs);
   }
 
   /* ---------- sending ---------- */
+  const releaseBtn = $("releaseBtn");
+  function nudgeRelease(cat) {
+    sys(t("sysRelease", { name: cat.name }));
+    releaseBtn.classList.remove("nudge");
+    void releaseBtn.offsetWidth;
+    releaseBtn.classList.add("nudge");
+  }
+
+  input.addEventListener("keydown", e => {
+    if (e.key.length === 1 || e.key === "Backspace") Sound.key();
+  });
+
   form.addEventListener("submit", e => {
     e.preventDefault();
     const msg = input.value.trim();
@@ -938,34 +1099,143 @@
       return;
     }
     input.value = "";
-    addLine({ nick: `you → ${selected.name}`, text: msg, kind: "you" });
-    catSays(selected, reply(selected, msg), 250);
+    Sound.send();
+    addLine({ nick: t("you", { name: selected.name }), text: msg, kind: "you" });
+
+    const cat = selected;
+    const r = respond(cat, msg);
+    if (r.safety) {
+      catSays(cat, r.text, { urgent: true, after: () => sys(P.SAFETY.sys[r.L], "care") });
+      return;
+    }
+    catSays(cat, r.text, {
+      delay: 250,
+      layer: r.layer,
+      after: () => {
+        // at the end of the arc, point gently at the exit (not every time)
+        if (r.layer === 5 && cat.state.turn - cat.state.hintedAt > 3) {
+          cat.state.hintedAt = cat.state.turn;
+          nudgeRelease(cat);
+        }
+      },
+    });
   });
 
-  /* ---------- little jokes ---------- */
-  const jokes = [
-    "nice try. cats cannot be closed.",
-    "this window is load-bearing. a cat is sleeping on it.",
-    "access denied by BYTE.EXE",
-    "LADY MEOWINGTON has requested this window stay exactly where it is.",
-    "ZEN GARY says: the window is already minimized, in a spiritual sense.",
-  ];
+  /* ---------- window-button jokes ---------- */
   document.querySelectorAll("[data-joke]").forEach(btn =>
-    btn.addEventListener("click", () => sys(jokes[Math.floor(Math.random() * jokes.length)]))
+    btn.addEventListener("click", () => sys(rand(I18N[lang].jokes)))
   );
 
-  /* ---------- tray clock + visitor counter ---------- */
+  /* ================================================================
+     RELEASE TO LIFE
+     ================================================================ */
+  const card = $("card"), away = $("away"), app = $("app");
+  const pickN = (arr, n) => [...arr].sort(() => Math.random() - 0.5).slice(0, n);
+
+  function openCard() {
+    const S = I18N[lang];
+    $("cardNo").textContent = t("cardNo", { n: String(1 + Math.floor(Math.random() * 999)).padStart(3, "0") });
+    $("fortune").textContent = rand(S.fortunes);
+    $("ritual").replaceChildren(...pickN(S.rituals, 3).map(r => Object.assign(document.createElement("li"), { textContent: r })));
+    $("lucky").textContent = rand(S.lucky);
+    Sound.release();
+    card.showModal();
+    $("cardGo").focus();
+  }
+
+  let nudgeTimer;
+  function armNudge() {
+    clearTimeout(nudgeTimer);
+    // after a long stretch, Mochi suggests a break, once
+    nudgeTimer = setTimeout(() => {
+      const mochi = CATS.find(c => c.id === "mochi");
+      catSays(mochi, mochi.nudge[lang], { layer: 5, after: () => nudgeRelease(mochi) });
+    }, 12 * 60 * 1000);
+  }
+
+  function goAway() {
+    card.close();
+    clearTimeout(nudgeTimer);
+    sys(t("sysStepped", { time: clock() }));
+    app.inert = true;
+    away.hidden = false;
+    $("awayBack").focus();
+  }
+
+  function comeBack() {
+    away.hidden = true;
+    app.inert = false;
+    sys(t("sysBack"));
+    catSays(selected, rand(selected.back[lang]), { delay: 300, layer: 0 });
+    CATS.forEach(c => { c.state.turn = 0; }); // fresh arc, fresh baseline
+    armNudge();
+    input.focus();
+  }
+
+  releaseBtn.addEventListener("click", openCard);
+  $("cardGo").addEventListener("click", goAway);
+  $("cardStay").addEventListener("click", () => card.close());
+  $("cardX").addEventListener("click", () => card.close());
+  card.addEventListener("click", e => { if (e.target === card) card.close(); }); // click on backdrop
+  $("awayBack").addEventListener("click", comeBack);
+
+  /* ================================================================
+     LANGUAGE + SOUND TOGGLES
+     ================================================================ */
+  const visitor = String(1000000 + Math.floor(Math.random() * 999999)).slice(1);
+
+  function applyLang(next, announce) {
+    lang = next;
+    store.set("meow.lang", lang);
+    document.documentElement.lang = lang === "zh" ? "zh-Hant" : "en";
+    document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.dataset.i18n); });
+    document.querySelectorAll("#langGroup button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
+    $("langGroup").setAttribute("aria-label", t("langLabel"));
+    $("visitor").textContent = t("badgeVisitor", { n: visitor });
+    room.setAttribute("aria-label", t("roomLabel"));
+    to.setAttribute("aria-label", t("toLabel"));
+    log.setAttribute("aria-label", t("logLabel"));
+    CATS.forEach(c => {
+      c.el.setAttribute("aria-label", t("talkTo", { name: c.name }));
+      c.bioEl.textContent = c.bio[lang];
+    });
+    renderSound();
+    select(selected, false);
+    if (announce) {
+      sys(t("sysLang"));
+      catSays(selected, rand(selected.greet[lang]), { delay: 200, layer: 0 });
+    }
+  }
+
+  function renderSound() {
+    $("soundBtn").setAttribute("aria-pressed", String(Sound.on));
+    $("soundLabel").textContent = t(Sound.on ? "soundOn" : "soundOff");
+  }
+
+  document.querySelectorAll("#langGroup button").forEach(b =>
+    b.addEventListener("click", () => { if (b.dataset.lang !== lang) applyLang(b.dataset.lang, true); })
+  );
+  $("soundBtn").addEventListener("click", () => {
+    Sound.set(!Sound.on);
+    store.set("meow.sound", Sound.on ? "on" : "off");
+    renderSound();
+    if (Sound.on) Sound.chime(selected.chime);
+  });
+
+  /* ---------- tray clock ---------- */
   const tick = () => { $("clock").textContent = clock(); };
   tick();
   setInterval(tick, 10000);
-  $("visitor").textContent = String(1000000 + Math.floor(Math.random() * 999999)).slice(1);
 
   /* ---------- boot ---------- */
+  if (store.get("meow.sound") === "on") Sound.set(true); // starts silent until first click/keypress
+  applyLang(lang, false);
   select(CATS[0], false);
-  sys("you have joined #meowchat");
-  sys(`${CATS.map(c => c.name).join(", ")} are here`);
-  sys("click a cat (or a To: chip), type a message, hit SEND");
-  CATS.forEach((cat, i) => catSays(cat, cat.greet, 500 + i * 1300));
+  sys(t("sysJoined"));
+  sys(t("sysHere", { names: CATS.map(c => c.name).join(", ") }));
+  sys(t("sysHint"));
+  CATS.forEach((cat, i) => catSays(cat, rand(cat.greet[lang]), { delay: 500 + i * 1400, layer: 0 }));
+  armNudge();
 })();
 </script>
 </body>
