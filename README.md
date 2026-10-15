@@ -17,9 +17,12 @@ Without the Worker (below), the cats use their built-in scripted replies, so the
 | `index.html` | Layout, themes, sprites, chat, Release card, Dissolve box, Notebook, live/local routing |
 | `personas.js` | The 6-layer framework, each cat's system instructions, signals, and all scripted lines (EN + 繁中) |
 | `i18n.js` | UI strings, fortunes, rituals, and Mochi's dissolve notes (EN + 繁中) |
-| `audio.js` | Procedural Web Audio: 8-bit SFX, rain, vinyl, and purr. No audio files. |
+| `audio.js` | Procedural Web Audio: 8-bit SFX, Meowbeats lo-fi radio, rain, vinyl, and purr. No audio files. |
 | `worker/worker.js` | Cloudflare Worker that turns chat turns into Gemini calls |
-| `worker/wrangler.toml` | Worker config |
+| `worker/wrangler.toml` | Worker config (allowed origins, model overrides, US placement) |
+| `tests/` | Content checks, Worker unit tests, end-to-end browser tests |
+| `scripts/stamp.mjs` | Cache-busting stamps for the `<script>` tags in `index.html` |
+| `CLAUDE.md` | Project briefing that Claude Code reads at the start of every session |
 
 ## The cats
 
@@ -33,12 +36,16 @@ Without the Worker (below), the cats use their built-in scripted replies, so the
 
 1. **The local engine always runs first.** It picks this turn's layer from the cat's arc (0 Unconditioned Baseline → 1 Somatic Ground → 2 Loop De-escalation → 3 Creative Subversion → 4 Sovereign Choice → 5 Real-Life Release). Signals in your message can jump to a layer: body words go to 1, rumination to 2, feeling stuck to 3, decisions to 4, and goodbyes to 5.
 2. **In LIVE mode**, the page sends `{ prompt, cat, history, lang, layer }` to the Worker. The Worker builds the system prompt from the framework, that cat's persona, and a hint for this turn's layer, then calls `gemini-3.8-flash` (change it with the `GEMINI_MODEL` variable).
-3. **If the Worker is down, slow (9 s), rate-limited, or returns nothing**, the scripted line from step 1 is used. The page then waits 1–2 minutes before trying the Worker again. The taskbar light shows the state: green = live, amber = falling back, grey = local only.
+3. **If the Worker is down, slow (22 s), rate-limited, or returns nothing**, the scripted line from step 1 is used, and the chat says why. The page tries live again after 8–60 seconds, depending on the error. The taskbar light shows the state: green = live, amber = falling back, grey = local only.
 4. **Safety:** messages about self-harm are **never sent** to the Worker. They get a fixed, sincere reply and crisis lines (Taiwan 1925 / 1995 / 1980, findahelpline.com elsewhere).
 
 Clicking **LIVE / LOCAL** in the taskbar switches modes. In local mode nothing leaves the browser.
 
 ## Live cats (Cloudflare Worker + Gemini)
+
+The Worker deploys itself. Any push to `main` that changes `worker/` runs the tests and then `wrangler deploy` through GitHub Actions. That uses the repo secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. You can also run **Deploy Worker** by hand from the Actions tab.
+
+First-time setup on a new account (one time only):
 
 ```bash
 cd worker
@@ -84,3 +91,16 @@ If the taskbar light turns amber, the chat log prints the reason once, the light
 Tap the ☆ on any cat reply or fortune card to save it. Saved cards appear in the **Zen Notebook** window (the taskbar **Notebook** button jumps to it). They're stored in this browser's `localStorage` only.
 
 Settings (language, theme, sound, live/local) are also remembered in `localStorage`.
+
+## Making changes
+
+Pushing to `main` publishes the site (GitHub Pages) and, when `worker/` changed, the Worker too. GitHub runs the tests on every push and pull request.
+
+```bash
+npm run test:fast   # seconds, no installs: content, persona sync, cache stamps, Worker
+npm ci && npm test  # adds the end-to-end browser tests (Playwright + Chromium)
+npm run stamp       # after editing personas.js / i18n.js / audio.js (CI checks this)
+```
+
+Small tweaks can go straight to `main`. Bigger features go on a branch with a pull request, so the tests run before anything goes live. `CLAUDE.md` has the full list of rules and gotchas.
+

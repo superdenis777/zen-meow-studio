@@ -1,0 +1,15 @@
+{
+  "name": "zen-meow-studio",
+  "private": true,
+  "type": "module",
+  "description": "MeowChat 2003: a retro chat room with three cats.",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "test:fast": "node --test tests/content.test.mjs tests/worker.test.mjs",
+    "test:e2e": "node --test tests/e2e.test.mjs",
+    "stamp": "node scripts/stamp.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1"
+  }
+}
