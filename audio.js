@@ -6,10 +6,14 @@
               rain   filtered noise wash + random droplets + slow gusts
               vinyl  tape hiss + randomized crackle
               purr   low brown noise, amplitude-pulsed ~25 Hz, breathing
+              music  "Meowbeats": a generative lo-fi radio (drums, jazzy
+                     chords, bass, the odd synthesized "mew")
    ===================================================================== */
 window.MeowAudio = (() => {
   const KEY = "meow.audio";
-  const state = { volume: 0.6, sfx: false, rain: false, vinyl: false, purr: false };
+  const state = { volume: 0.6, sfx: false, rain: false, vinyl: false, purr: false, music: false };
+  const AMBIENCE = ["music", "rain", "vinyl", "purr"];
+  let nowPlaying = ""; // Meowbeats track title, while it plays
   try {
     Object.assign(state, JSON.parse(localStorage.getItem(KEY) || "{}"));
     if (localStorage.getItem("meow.sound") === "on") state.sfx = true; // V2 setting
@@ -188,6 +192,147 @@ window.MeowAudio = (() => {
       lungs.start();
       return stopper(out, [body, pulse, lungs]);
     },
+
+    music() {
+      const out = fader(0.6);
+      const mix = ctx.createGain(); // everything → dusty lowpass → out
+      mix.connect(biquad("lowpass", 3200, 0.5)).connect(out);
+
+      // tape wow: slowly drifts the pitch of chords + bass a few cents
+      const wow = ctx.createOscillator();
+      wow.frequency.value = 0.33;
+      const wowDepth = ctx.createGain();
+      wowDepth.gain.value = 7;
+      wow.connect(wowDepth);
+      wow.start();
+
+      const hz = midi => 440 * 2 ** ((midi - 69) / 12);
+      const noiseBuf = noise("white", 1);
+      const env = (g, t, peak, attack, hold, release) => {
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(peak, t + attack);
+        g.gain.setValueAtTime(peak, t + attack + hold);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + attack + hold + release);
+        return t + attack + hold + release;
+      };
+
+      /* ---- instruments ---- */
+      const kick = t => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.frequency.setValueAtTime(115, t);
+        o.frequency.exponentialRampToValueAtTime(42, t + 0.14);
+        o.connect(g).connect(mix);
+        o.start(t); o.stop(env(g, t, 0.55, 0.004, 0.02, 0.28) + 0.05);
+      };
+      const snare = t => {
+        const n = ctx.createBufferSource(), g = ctx.createGain();
+        n.buffer = noiseBuf;
+        n.connect(biquad("bandpass", 1900, 0.8)).connect(g).connect(mix);
+        n.start(t, Math.random() * 0.5); n.stop(env(g, t, 0.22, 0.002, 0.01, 0.17) + 0.05);
+        const o = ctx.createOscillator(), og = ctx.createGain(); // body
+        o.type = "triangle"; o.frequency.value = 185;
+        o.connect(og).connect(mix);
+        o.start(t); o.stop(env(og, t, 0.12, 0.002, 0.005, 0.08) + 0.05);
+      };
+      const hat = (t, vel) => {
+        const n = ctx.createBufferSource(), g = ctx.createGain();
+        n.buffer = noiseBuf;
+        n.connect(biquad("highpass", 7200, 0.7)).connect(g).connect(mix);
+        n.start(t, Math.random() * 0.5); n.stop(env(g, t, 0.05 * vel, 0.001, 0.004, 0.035) + 0.05);
+      };
+      const keys = (t, notes, dur, vel = 1) => { // soft electric-piano chord
+        const bus = ctx.createGain();
+        bus.connect(biquad("lowpass", 1500, 0.6)).connect(mix);
+        const end = env(bus, t, 0.09 * vel, 0.03, dur * 0.6, dur * 0.6);
+        notes.forEach((m, i) => [-6, 6].forEach((cents, j) => {
+          const o = ctx.createOscillator();
+          o.type = j ? "sine" : "triangle";
+          o.frequency.value = hz(m);
+          o.detune.value = cents;
+          wowDepth.connect(o.detune);
+          o.connect(bus);
+          o.start(t + i * 0.012); // a lazy strum
+          o.stop(end + 0.05);
+        }));
+      };
+      const bass = (t, m, dur) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = "triangle"; o.frequency.value = hz(m);
+        wowDepth.connect(o.detune);
+        o.connect(biquad("lowpass", 380, 0.7)).connect(g).connect(mix);
+        o.start(t); o.stop(env(g, t, 0.32, 0.01, dur * 0.5, dur * 0.5) + 0.05);
+      };
+      const lead = (t, m) => { // a few quiet melody notes
+        const o = ctx.createOscillator(), g = ctx.createGain(), vib = ctx.createOscillator(), vd = ctx.createGain();
+        o.type = "sine"; o.frequency.value = hz(m);
+        vib.frequency.value = 5; vd.gain.value = 4; vib.connect(vd).connect(o.frequency);
+        o.connect(g).connect(mix);
+        const end = env(g, t, 0.05, 0.02, 0.12, 0.5);
+        o.start(t); vib.start(t); o.stop(end + 0.05); vib.stop(end + 0.05);
+      };
+      const mew = t => { // a synthesized "mew": pitch + formant glide
+        const o = ctx.createOscillator(), f = biquad("bandpass", 900, 5), g = ctx.createGain();
+        o.type = "sawtooth";
+        o.frequency.setValueAtTime(560, t);
+        o.frequency.linearRampToValueAtTime(820, t + 0.12);
+        o.frequency.linearRampToValueAtTime(520, t + 0.42);
+        f.frequency.setValueAtTime(800, t);
+        f.frequency.linearRampToValueAtTime(1500, t + 0.14);
+        f.frequency.linearRampToValueAtTime(700, t + 0.42);
+        o.connect(f).connect(g).connect(mix);
+        o.start(t); o.stop(env(g, t, 0.09, 0.04, 0.14, 0.26) + 0.05);
+      };
+
+      /* ---- the "radio": three tracks, rotating every 24 bars ---- */
+      const TRACKS = [
+        { title: "tuna rain", bpm: 76, prog: [ // Dm9 G13 Cmaj9 Am9
+          [50, [62, 65, 69, 72, 76]], [43, [59, 64, 65, 69]], [48, [59, 64, 67, 71]], [45, [60, 64, 67, 71]]] },
+        { title: "window sill dreams", bpm: 70, prog: [ // Fmaj7 Em7 Dm7 Cmaj7
+          [41, [64, 67, 69, 72]], [40, [62, 67, 71, 74]], [50, [60, 65, 69, 72]], [48, [59, 64, 67, 71]]] },
+        { title: "nap at 3pm", bpm: 82, prog: [ // Am7 D9 Gmaj7 Cmaj7
+          [45, [60, 64, 67, 69]], [50, [60, 64, 66, 69]], [43, [59, 62, 66, 67]], [48, [59, 64, 67, 71]]] },
+      ];
+      let track = Math.floor(Math.random() * TRACKS.length);
+      let step = 0, bar = 0, next = ctx.currentTime + 0.15;
+      const announce = () => { nowPlaying = TRACKS[track].title; emit(); };
+      announce();
+
+      function schedule(i, t, sixteenth) {
+        const { prog } = TRACKS[track];
+        const [root, chord] = prog[bar % prog.length];
+        const at = t + (i % 2 ? sixteenth * 0.18 : 0); // lazy, swung off-beats
+        if (i === 0 || i === 10) kick(at);
+        if (i === 7 && Math.random() < 0.3) kick(at);        // ghost kick
+        if (i === 4 || i === 12) snare(at);
+        if (i % 2 === 0) hat(at, i % 4 === 0 ? 1 : 0.6);
+        else if (Math.random() < 0.25) hat(at, 0.35);        // shuffle
+        if (i === 0) keys(at, chord, sixteenth * 14);
+        if (i === 8 && Math.random() < 0.5) keys(at, chord.slice(1), sixteenth * 6, 0.6);
+        if (i === 0) bass(at, root, sixteenth * 6);
+        if (i === 10) bass(at, root + (Math.random() < 0.5 ? 7 : 12), sixteenth * 4);
+        if (i % 2 === 0 && i > 0 && Math.random() < 0.16) lead(at, chord[Math.floor(Math.random() * chord.length)] + 12);
+        if (i === 6 && bar % 4 === 3 && Math.random() < 0.7) mew(at);
+      }
+
+      // look-ahead scheduler (further ahead when the tab is in the background,
+      // because browsers slow timers there)
+      const timer = setInterval(() => {
+        const sixteenth = 60 / TRACKS[track].bpm / 4;
+        const ahead = document.hidden ? 1.5 : 0.2;
+        if (next < ctx.currentTime) next = ctx.currentTime + 0.05; // after a suspend, don't burst
+        while (next < ctx.currentTime + ahead) {
+          schedule(step, next, sixteenth);
+          next += sixteenth;
+          if (++step === 16) {
+            step = 0;
+            if (++bar % 24 === 0) { track = (track + 1) % TRACKS.length; announce(); }
+          }
+        }
+      }, 25);
+
+      const s = stopper(out, [wow], [timer]);
+      return { stop() { s.stop(); nowPlaying = ""; emit(); } };
+    },
   };
 
   function sync(name) {
@@ -223,7 +368,8 @@ window.MeowAudio = (() => {
 
   const api = {
     get state() { return { ...state }; },
-    get anyOn() { return state.sfx || state.rain || state.vinyl || state.purr; },
+    get anyOn() { return state.sfx || AMBIENCE.some(ch => state[ch]); },
+    get nowPlaying() { return nowPlaying; },
     onChange(fn) { listeners.add(fn); },
 
     set(name, on) {
@@ -240,11 +386,11 @@ window.MeowAudio = (() => {
       emit();
     },
     // used while the user has "stepped away"
-    pauseAmbience() { paused = true; ["rain", "vinyl", "purr"].forEach(sync); },
-    resumeAmbience() { paused = false; ["rain", "vinyl", "purr"].forEach(sync); },
+    pauseAmbience() { paused = true; AMBIENCE.forEach(sync); },
+    resumeAmbience() { paused = false; AMBIENCE.forEach(sync); },
     restore() { // re-start saved channels (they stay silent until the first gesture)
       if (state.sfx) init();
-      ["rain", "vinyl", "purr"].forEach(sync);
+      AMBIENCE.forEach(sync);
     },
 
     key() {

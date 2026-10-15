@@ -76,7 +76,7 @@ If the taskbar light turns amber, the chat log prints the reason once, the light
 - **EN / 繁中**: switches the whole UI and the cats' language. Cats also reply in whatever language you type.
 - **Theme**: Midnight Dial-Up, Sunset CRT (with scanlines), Cyber Matcha, or Rose Quartz.
 - **Dissolve Thought**: type a looping worry, press *Release / Dissolve*, and watch it burn into pixel light. Then Mochi says one grounding line. Nothing you type there is saved, logged, or sent.
-- **Sound**: the ambience panel, with a volume slider plus toggles for clicks & chimes, soft rain, vinyl hiss & crackle, and cat purr. All of it is synthesized live with Web Audio. It pauses while you've stepped away.
+- **Sound**: the ambience panel, with a volume slider plus toggles for **Meowbeats** (a generative lo-fi radio: swung drums, jazzy chords, bass and the odd synthesized "mew", rotating between three tracks), clicks & chimes, soft rain, vinyl hiss & crackle, and cat purr. All of it is synthesized live with Web Audio. It pauses while you've stepped away.
 - **Release / Ground Me**: a pixel fortune card with a grounding note, a three-step ritual, and a lucky object. "I'm going" dims the room until you return.
 
 ## Zen Notebook
