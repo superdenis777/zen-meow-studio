@@ -1005,7 +1005,7 @@
 
   // Live cats: the Cloudflare Worker in worker/worker.js
   const API_URL = "https://zen-meow-api.popadenisro.workers.dev";
-  const API_TIMEOUT_MS = 15000; // cold starts + Gemini can take a few seconds
+  const API_TIMEOUT_MS = 22000; // cold start + Gemini + the Worker's overload retries
 
   /* ================================================================
      PIXEL SPRITES
@@ -1266,7 +1266,8 @@
       try { data = JSON.parse(raw); } catch { /* not JSON */ }
       if (!res.ok) {
         const why = [data?.error, data?.status && `Gemini ${data.status}`, data?.detail].filter(Boolean).join(", ");
-        return liveFailed(`HTTP ${res.status}${why ? `: ${why}` : ""}`, res.status === 429 ? 60_000 : 30_000);
+        // Google overloaded ("high demand") is brief: try live again soon
+        return liveFailed(`HTTP ${res.status}${why ? `: ${why}` : ""}`, res.status === 429 ? 60_000 : data?.retryable ? 8_000 : 30_000);
       }
       const reply = readReply(data).replace(/[*_#`]/g, "").trim().slice(0, 600);
       if (!reply) return liveFailed(`unexpected response: ${raw.slice(0, 120) || "(empty)"}`, 30_000);

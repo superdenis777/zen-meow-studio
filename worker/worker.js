@@ -39,6 +39,11 @@ const DEFAULT_ORIGINS = ["https://superdenis777.github.io"];
 
 const LIMITS = { prompt: 500, turns: 12, turnChars: 600, reply: 600 };
 
+// Gemini overload / hiccup statuses worth retrying ("high demand" is a 503)
+const RETRYABLE = new Set([500, 502, 503, 504]);
+const RETRY_WAITS_MS = [800, 2000];
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
 const LAYERS = [
   { en: "Unconditioned Baseline", zh: "無條件的原點" },
   { en: "Somatic Ground", zh: "身體的地面" },
@@ -222,23 +227,33 @@ export default {
     const input = validate(body);
     if (input.error) return json(input, 400, cors);
 
-    const call = withThinking => fetch(endpointFor(model), {
+    const call = (withThinking, useModel = model) => fetch(endpointFor(useModel), {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: systemPrompt(input.cat, input.lang, input.layer) }] },
         contents: input.contents,
-        generationConfig: generationConfigFor(model, withThinking),
+        generationConfig: generationConfigFor(useModel, withThinking),
       }),
     });
 
     let res;
     try {
-      res = await call(true);
+      let thinking = true;
+      res = await call(thinking);
       // if this model rejects our thinking settings, ask again without them
-      if (res.status === 400) res = await call(false);
+      if (res.status === 400) { thinking = false; res = await call(thinking); }
+      // overloaded ("high demand") or hiccup: back off briefly and retry
+      for (const wait of RETRY_WAITS_MS) {
+        if (!RETRYABLE.has(res.status)) break;
+        await sleep(wait);
+        res = await call(thinking);
+      }
+      // still overloaded: optionally try a second model
+      const backup = String(env.GEMINI_FALLBACK_MODEL || "").trim();
+      if (RETRYABLE.has(res.status) && backup && backup !== model) res = await call(thinking, backup);
     } catch {
-      return json({ error: "upstream unreachable" }, 502, cors);
+      return json({ error: "upstream unreachable", retryable: true }, 502, cors);
     }
 
     if (!res.ok) {
@@ -246,7 +261,7 @@ export default {
       // page's console and `wrangler tail` say exactly what went wrong.
       const detail = String((await res.json().catch(() => null))?.error?.message || "").slice(0, 300);
       console.log(`gemini ${model} → ${res.status}: ${detail}`);
-      return json({ error: res.status === 429 ? "upstream rate limited" : "upstream error", status: res.status, model, detail }, res.status === 429 ? 429 : 502, cors);
+      return json({ error: res.status === 429 ? "upstream rate limited" : "upstream error", status: res.status, model, detail, retryable: RETRYABLE.has(res.status) }, res.status === 429 ? 429 : 502, cors);
     }
 
     const data = await res.json().catch(() => null);
