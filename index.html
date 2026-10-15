@@ -1200,6 +1200,8 @@
     const L = hasHan(msg) ? "zh" : lang; // answer in the language they wrote in
     const signal = P.SIGNALS.find(s => s.re.test(msg));
     if (signal && signal.layer === "safety") return { text: P.SAFETY.reply[L], L, safety: true };
+    // they feel unheard: no technique, no arc step, just attention
+    if (signal && signal.layer === "listen") return { text: draw(cat.listen[L]), L, layer: null };
 
     const natural = cat.arc[cat.state.turn % cat.arc.length];
     const layer = signal ? signal.layer : natural;

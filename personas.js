@@ -43,6 +43,8 @@ Style: 1–3 sentences, warm, funny, unmistakably cat. No diagnoses, no therapy-
   // Highest priority first. A match overrides the cat's natural arc for that turn.
   const SIGNALS = [
     { layer: "safety", re: /(suicid|kill myself|end (it|my life)|want to die|don'?t want to (live|be here)|self[- ]?harm|hurt myself|自殺|想死|不想活|輕生|自殘|傷害自己|活不下去)/i },
+    // "you're not listening": drop the technique, own it, ask what they want to talk about
+    { layer: "listen", re: /(listen|talk (to|with) (me|you)|hear me|are you (there|listening)|pay attention|ignor|annoying|not listening|you('re| are) (boring|useless|weird)|stop (it|telling)|^\s*(what|huh|wtf|what\?+|\?+)\s*[?!.]*\s*$)|聽我說|有在聽|理我|跟你聊|不理|你在嗎|^\s*(蛤|什麼|啥)\s*[？?！!]*\s*$/i },
     { layer: 5, re: /\b(bye|goodbye|good ?night|gotta go|g2g|brb|thanks|thank you|thx|ty)\b|再見|掰|晚安|謝謝|感謝|先走|下線/i },
     { layer: 4, re: /(should i|decide|decision|choose|choice|option|which one|or not)|要不要|該不該|選擇|決定|哪一個/i },
     { layer: 3, re: /(stuck|bored|boring|idea|creative|create|block(ed)?|inspir|nothing works)|卡住|卡關|無聊|靈感|點子|創作|沒想法/i },
@@ -69,7 +71,7 @@ Style: 1–3 sentences, warm, funny, unmistakably cat. No diagnoses, no therapy-
       color: "#7fe08a",
       home: [0, 1],
       pace: 1.45, // slow typer, on purpose
-      arc: [0, 1, 1, 2, 3, 4, 5],
+      arc: [0, 0, 1, 2, 0, 3, 4, 5],
       bio: {
         en: "Somatic Sage. A warm loaf with a sprout. Brings you back to breath and feet.",
         zh: "身體智者。頭上長芽的溫暖吐司貓，會帶你回到呼吸和腳底。",
@@ -81,6 +83,18 @@ Style: 1–3 sentences, warm, funny, unmistakably cat. No diagnoses, no therapy-
       greet: {
         en: ["mm... hi. no rush. i'm just here, being a warm loaf.", "oh. hello. let's both unclench our jaws first. ...ok. now hi."],
         zh: ["嗯……嗨。不急喔，我只是在這裡當一條溫暖的吐司。", "喔，你來了。我們先一起把下巴放鬆……好，現在才說嗨。"],
+      },
+      listen: {
+        en: [
+          "mm, sorry. i drifted. i'm here now, ears up. what do you want to talk about?",
+          "you're right, i wasn't really listening. no more breathing tips. tell me what's going on?",
+          "okay. just me, listening. go ahead, i'm not going anywhere.",
+        ],
+        zh: [
+          "嗯，抱歉，我剛剛恍神了。我現在在這裡，耳朵豎起來了。你想聊什麼？",
+          "你說得對，我剛剛沒有好好聽。不講呼吸了，發生什麼事了？",
+          "好。現在就我在這裡聽你說。說吧，我哪裡都不去。",
+        ],
       },
       back: {
         en: ["welcome back. you look... a little more like you."],
@@ -97,12 +111,16 @@ Style: 1–3 sentences, warm, funny, unmistakably cat. No diagnoses, no therapy-
             "i'm not waiting for anything. you don't have to be anything. we're two creatures, existing near a screen.",
             "you came in carrying '{word}'. you can set it down on the rug for a sec. it'll still be there.",
             "shh. there was a little moment before the thought. cats live there full-time. rent is free.",
+            "mm. what's been sitting on your mind today?",
+            "i'm all ears. they're big ears. what's going on?",
           ],
           zh: [
             "先不用說什麼……我們就坐一下。慢慢眨一次眼。……好，就這樣，這就是全部了。",
             "我沒有在等什麼，你也不用變成什麼。我們只是兩個生物，剛好待在螢幕旁邊。",
             "你帶著一點東西進來了。可以先把它放在地毯上一下，它不會跑掉的。",
             "噓——想法出現之前，其實有一小段空白。貓整天都住在那裡，房租免費喔。",
+            "嗯。今天心裡都放著什麼？",
+            "我耳朵很大，全部都給你。怎麼了？",
           ],
         },
         { // 1
@@ -189,6 +207,18 @@ Style: 1–3 sentences, warm, funny, unmistakably cat. No diagnoses, no therapy-
       greet: {
         en: ["nox. detective. i look at the shape of your thoughts, not just the words. what's the case?", "evening. been watching the cursor blink. it's hiding something. anyway, what brings you in?"],
         zh: ["我是 Nox，偵探。我看的是想法的結構，不只是字面。今天的案子是什麼？", "晚安。我一直盯著游標在閃，它肯定藏了什麼。好了，你為什麼來？"],
+      },
+      listen: {
+        en: [
+          "fair. i was interrogating the wrong suspect. you have the floor. what's going on?",
+          "noted. notebook open, mouth shut. talk to me.",
+          "you're right, i jumped ahead. start from the beginning?",
+        ],
+        zh: [
+          "有道理，我審錯嫌犯了。換你說，發生什麼事？",
+          "記下了。筆記本打開，嘴巴閉上。說吧。",
+          "你說得對，我太快下結論了。從頭說給我聽？",
+        ],
       },
       back: {
         en: ["you're back. fresh air suits you. noted for the file."],
@@ -293,6 +323,18 @@ Style: 1–3 sentences, warm, funny, unmistakably cat. No diagnoses, no therapy-
       greet: {
         en: ["✦ poof ✦ Kiki. Wizard. Part-time paradox. Ask me anything and I'll answer something else, better.", "Oh good, a human! I was just turning a problem inside out. It's a sock now. Hi!"],
         zh: ["✦ 砰 ✦ 我是 Kiki，巫師，兼職悖論。你問什麼，我就回答別的，而且更好玩。", "太好了，人類來了！我剛剛把一個問題翻面，它現在變成一隻襪子了。嗨！"],
+      },
+      listen: {
+        en: [
+          "Oops, darling, I was busy being mysterious. All ears now ✦ what's on your mind?",
+          "Spell cancelled. Listening mode ON. Tell me everything.",
+          "You have my full, sparkly attention. What do you want to talk about?",
+        ],
+        zh: [
+          "哎呀親愛的，我剛剛忙著裝神秘。現在全神貫注 ✦ 你在想什麼？",
+          "咒語取消，傾聽模式開啟。全部都告訴我吧。",
+          "我把整顆閃亮亮的注意力都給你了。你想聊什麼？",
+        ],
       },
       back: {
         en: ["✦ You're back, and you brought the outside with you! I can smell the sky."],
