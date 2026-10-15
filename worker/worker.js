@@ -210,7 +210,8 @@ export default {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
     if (request.method === "GET") {
       // health check, no secrets: is this deployment wired up correctly?
-      return json({ ok: true, service: "zen-meow-api", model, keyConfigured: Boolean(env.GEMINI_API_KEY), allowedOrigins: allowed, rateLimiter: Boolean(env.RATE_LIMITER) }, 200, cors);
+      // colo = the Cloudflare data center running this request (e.g. "HKG", "ORD")
+      return json({ ok: true, service: "zen-meow-api", model, keyConfigured: Boolean(env.GEMINI_API_KEY), allowedOrigins: allowed, rateLimiter: Boolean(env.RATE_LIMITER), colo: request.cf?.colo ?? null }, 200, cors);
     }
     if (request.method !== "POST") return json({ error: "method not allowed" }, 405, cors);
     // Origin checks stop other websites from using this from a browser.
@@ -275,8 +276,9 @@ export default {
       // Pass Gemini's own message along (it never contains the key) so the
       // page's console and `wrangler tail` say exactly what went wrong.
       const detail = String((await res.json().catch(() => null))?.error?.message || "").slice(0, 300);
-      console.log(`gemini ${model} → ${res.status}: ${detail}`);
-      return json({ error: res.status === 429 ? "upstream rate limited" : "upstream error", status: res.status, model, detail, retryable: RETRYABLE.has(res.status) }, res.status === 429 ? 429 : 502, cors);
+      const colo = request.cf?.colo ?? null;
+      console.log(`gemini ${model} via ${colo} → ${res.status}: ${detail}`);
+      return json({ error: res.status === 429 ? "upstream rate limited" : "upstream error", status: res.status, model, detail: colo && /location/i.test(detail) ? `${detail} [Cloudflare ${colo}]` : detail, retryable: RETRYABLE.has(res.status) }, res.status === 429 ? 429 : 502, cors);
     }
 
     const data = await res.json().catch(() => null);

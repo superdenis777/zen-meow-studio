@@ -22,3 +22,10 @@ ALLOWED_ORIGINS = "https://superdenis777.github.io"
 # name = "RATE_LIMITER"
 # namespace_id = "1001"
 # simple = { limit = 20, period = 60 }
+
+# Run near Google's US region instead of the visitor's nearest edge. Gemini
+# refuses some Cloudflare locations (e.g. Hong Kong → 400 "User location is
+# not supported for the API use"), which can serve visitors from Taiwan.
+# Only applies when deploying with `npx wrangler deploy` (not dashboard edits).
+[placement]
+region = "gcp:us-central1"
