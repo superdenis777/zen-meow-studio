@@ -1,0 +1,972 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MeowChat 2003</title>
+<!-- Pixel fonts. If you're offline the page falls back to monospace and still works. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --desk: #1fb5ad;
+    --desk-dot: #189a93;
+    --win: #fff6dc;
+    --ink: #1a1030;
+    --title-a: #ff4fa3;
+    --title-b: #7a5cff;
+    --bevel-hi: #ffffff;
+    --bevel-lo: #8a7f9c;
+    --log-bg: #0d0b2a;
+    --log-ink: #e9e6ff;
+    --sys: #8be9fd;
+    --you: #ffe347;
+    --lime: #39ff14;
+    --wall-a: #ffd7f0;
+    --wall-b: #ffc4e6;
+    --floor-a: #7fd4ff;
+    --floor-b: #5ec0f2;
+    --pixel: "Press Start 2P", "Courier New", monospace;
+    --term: "VT323", "Courier New", monospace;
+    --sprite: 5px; /* size of one cat pixel */
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { margin: 0; min-height: 100%; }
+
+  body {
+    background-color: var(--desk);
+    background-image:
+      radial-gradient(var(--desk-dot) 1.5px, transparent 1.6px),
+      radial-gradient(var(--desk-dot) 1.5px, transparent 1.6px);
+    background-size: 16px 16px;
+    background-position: 0 0, 8px 8px;
+    color: var(--ink);
+    font-family: var(--term);
+    font-size: 20px;
+    padding: 16px 16px 64px;
+  }
+
+  /* ---------- Banner ---------- */
+  .banner {
+    max-width: 1100px;
+    margin: 0 auto 16px;
+    text-align: center;
+  }
+  .logo {
+    font-family: var(--pixel);
+    font-size: clamp(22px, 5vw, 44px);
+    margin: 8px 0 12px;
+    color: #fff;
+    letter-spacing: 2px;
+    text-shadow:
+      3px 3px 0 var(--title-a),
+      6px 6px 0 var(--title-b),
+      9px 9px 0 var(--ink);
+  }
+  .blink { animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .marquee {
+    overflow: hidden;
+    white-space: nowrap;
+    background: var(--ink);
+    color: var(--lime);
+    border: 3px solid #fff;
+    outline: 3px solid var(--ink);
+    padding: 4px 0;
+    font-size: 22px;
+  }
+  .marquee span {
+    display: inline-block;
+    padding-left: 100%;
+    animation: scroll 22s linear infinite;
+  }
+  @keyframes scroll { to { transform: translateX(-100%); } }
+
+  .badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .badge {
+    font-family: var(--pixel);
+    font-size: 8px;
+    line-height: 1.6;
+    padding: 4px 6px;
+    background: #fff;
+    border: 2px solid var(--ink);
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  .badge.hot { background: var(--you); }
+  .badge.net { background: #c7f0ff; }
+
+  /* ---------- Windows ---------- */
+  .desktop {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+  }
+
+  .window {
+    background: var(--win);
+    border: 3px solid var(--ink);
+    box-shadow:
+      inset 3px 3px 0 var(--bevel-hi),
+      inset -3px -3px 0 var(--bevel-lo),
+      6px 6px 0 var(--ink);
+    min-width: 0;
+  }
+  .titlebar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 6px 6px 10px;
+    background: linear-gradient(90deg, var(--title-a), var(--title-b));
+    color: #fff;
+    font-family: var(--pixel);
+    font-size: 11px;
+    border-bottom: 3px solid var(--ink);
+    text-shadow: 2px 2px 0 var(--ink);
+  }
+  .titlebar .title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .titlebar .icon { width: 14px; height: 14px; background: var(--you); border: 2px solid var(--ink); flex: none; }
+  .winbtn {
+    width: 22px; height: 20px;
+    padding: 0;
+    font-family: var(--pixel);
+    font-size: 9px;
+    color: var(--ink);
+    background: #e4dcf2;
+    border: 2px solid var(--ink);
+    box-shadow: inset 2px 2px 0 #fff, inset -2px -2px 0 var(--bevel-lo);
+    cursor: pointer;
+    flex: none;
+  }
+  .winbtn:active { box-shadow: inset -2px -2px 0 #fff, inset 2px 2px 0 var(--bevel-lo); }
+  .winbody { padding: 12px; }
+
+  /* ---------- Lobby room ---------- */
+  .room {
+    position: relative;
+    border: 3px solid var(--ink);
+    overflow: hidden;
+    /* wallpaper on top 55%, checker floor below */
+    background:
+      repeating-linear-gradient(90deg, var(--wall-a) 0 16px, var(--wall-b) 16px 32px) top / 100% 55% no-repeat,
+      repeating-conic-gradient(var(--floor-a) 0 25%, var(--floor-b) 0 50%) 0 0 / 32px 32px;
+    padding: 96px 8px 14px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .room::before { /* skirting board */
+    content: "";
+    position: absolute;
+    left: 0; right: 0;
+    top: 55%;
+    height: 6px;
+    background: var(--ink);
+  }
+  .poster {
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--ink);
+    color: var(--you);
+    font-family: var(--pixel);
+    font-size: 8px;
+    padding: 6px 8px;
+    border: 3px solid #fff;
+    box-shadow: 3px 3px 0 var(--ink);
+    white-space: nowrap;
+  }
+
+  .cat {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: none;
+    border: 0;
+    padding: 4px 0 0;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+    min-width: 0;
+  }
+  .cat:focus-visible { outline: 3px dashed var(--ink); outline-offset: 2px; }
+
+  .cat .arrow {
+    position: absolute;
+    top: -14px;
+    width: 0; height: 0;
+    border: 9px solid transparent;
+    border-top: 12px solid var(--you);
+    border-bottom: 0;
+    filter: drop-shadow(2px 2px 0 var(--ink));
+    visibility: hidden;
+  }
+  .cat[aria-checked="true"] .arrow { visibility: visible; animation: hop .6s steps(2) infinite; }
+  @keyframes hop { 50% { transform: translateY(-4px); } }
+
+  .rig { position: relative; width: calc(22 * var(--sprite)); height: calc(23 * var(--sprite)); }
+  .rig svg { position: absolute; display: block; image-rendering: pixelated; }
+  .rig .sprite { left: 0; top: 0; width: calc(22 * var(--sprite)); height: calc(21 * var(--sprite)); }
+  .rig .laptop { left: calc(4 * var(--sprite)); bottom: 0; width: calc(14 * var(--sprite)); height: calc(9 * var(--sprite)); }
+
+  .cat.typing .sprite { animation: bob .36s steps(2) infinite; }
+  .cat.typing .laptop { animation: jiggle .18s steps(2) infinite; }
+  @keyframes bob { 50% { transform: translateY(calc(-1 * var(--sprite))); } }
+  @keyframes jiggle { 50% { transform: translateX(1px); } }
+
+  .shadow {
+    width: calc(16 * var(--sprite));
+    height: 8px;
+    margin-top: -4px;
+    border-radius: 50%;
+    background: rgba(26, 16, 48, .25);
+  }
+  .nameplate {
+    margin-top: 6px;
+    max-width: 100%;
+    padding: 3px 6px;
+    font-family: var(--pixel);
+    font-size: 8px;
+    line-height: 1.5;
+    color: #fff;
+    background: var(--ink);
+    border: 2px solid #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cat[aria-checked="true"] .nameplate { background: var(--cat-color); color: var(--ink); border-color: var(--ink); }
+
+  .bubble {
+    position: absolute;
+    bottom: calc(100% - 4px);
+    left: 50%;
+    width: max-content;
+    max-width: 100%; /* stay inside this cat's column so bubbles never collide */
+    padding: 4px 6px;
+    overflow-wrap: anywhere;
+    background: #fff;
+    border: 2px solid var(--ink);
+    border-radius: 6px;
+    box-shadow: 3px 3px 0 var(--ink);
+    font-size: 17px;
+    line-height: 1.05;
+    text-align: left;
+    transform: translateX(-50%) scale(0);
+    transform-origin: 50% 100%;
+    transition: transform .12s steps(3);
+    pointer-events: none;
+    z-index: 2;
+  }
+  .bubble::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -9px;
+    margin-left: -6px;
+    border: 6px solid transparent;
+    border-top-color: var(--ink);
+    border-bottom: 0;
+  }
+  .bubble span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; }
+  .bubble b { color: var(--cat-color); -webkit-text-stroke: .4px var(--ink); }
+  .bubble.show { transform: translateX(-50%) scale(1); }
+
+  .roster {
+    margin-top: 12px;
+    display: grid;
+    gap: 8px;
+  }
+  .roster p { margin: 0; line-height: 1.1; }
+  .roster b { font-family: var(--pixel); font-size: 9px; color: var(--ink); background: var(--cat-color); padding: 2px 4px; border: 2px solid var(--ink); margin-right: 6px; }
+
+  /* ---------- Chat ---------- */
+  .log {
+    height: 360px;
+    overflow-y: auto;
+    padding: 10px;
+    background: var(--log-bg);
+    color: var(--log-ink);
+    border: 3px solid var(--ink);
+    box-shadow: inset 3px 3px 0 #000;
+    font-size: 20px;
+    line-height: 1.15;
+    scrollbar-color: var(--title-b) var(--log-bg);
+  }
+  .msg { margin: 0 0 6px; overflow-wrap: anywhere; }
+  .msg .time { color: #6f6a99; }
+  .msg .nick { font-weight: normal; }
+  .msg.sys { color: var(--sys); }
+  .msg.you .nick { color: var(--you); }
+
+  .status {
+    height: 26px;
+    margin: 8px 0;
+    padding: 2px 8px;
+    font-size: 18px;
+    background: #efe6ff;
+    border: 2px solid var(--ink);
+    box-shadow: inset 2px 2px 0 var(--bevel-lo);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .to {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    font-family: var(--pixel);
+    font-size: 9px;
+  }
+  .chip {
+    font-family: var(--pixel);
+    font-size: 9px;
+    padding: 6px 8px;
+    color: var(--ink);
+    background: #fff;
+    border: 2px solid var(--ink);
+    box-shadow: 2px 2px 0 var(--ink);
+    cursor: pointer;
+  }
+  .chip[aria-checked="true"] { background: var(--cat-color); transform: translate(2px, 2px); box-shadow: none; }
+
+  .prompt {
+    display: flex;
+    gap: 8px;
+  }
+  .field {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    background: var(--log-bg);
+    border: 3px solid var(--ink);
+    box-shadow: inset 3px 3px 0 #000;
+    padding: 0 8px;
+    color: var(--lime);
+  }
+  .field label { flex: none; font-size: 20px; margin-right: 6px; }
+  .field input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: 0;
+    outline: 0;
+    color: var(--lime);
+    caret-color: var(--lime);
+    font-family: var(--term);
+    font-size: 22px;
+    padding: 6px 0;
+  }
+  .field input::placeholder { color: #3f7a3a; }
+  .field:focus-within { outline: 3px dashed var(--title-a); outline-offset: 2px; }
+
+  .send {
+    flex: none;
+    font-family: var(--pixel);
+    font-size: 11px;
+    padding: 0 14px;
+    color: var(--ink);
+    background: var(--you);
+    border: 3px solid var(--ink);
+    box-shadow: inset 3px 3px 0 #fff8b0, inset -3px -3px 0 #c9a800, 3px 3px 0 var(--ink);
+    cursor: pointer;
+  }
+  .send:active { transform: translate(3px, 3px); box-shadow: inset 3px 3px 0 #c9a800; }
+
+  .shake { animation: shake .3s steps(4); }
+  @keyframes shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+
+  /* ---------- Taskbar ---------- */
+  .taskbar {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: #d9d0ea;
+    border-top: 3px solid #fff;
+    box-shadow: 0 -3px 0 var(--ink);
+    font-family: var(--pixel);
+    font-size: 9px;
+    z-index: 10;
+  }
+  .start {
+    font-family: var(--pixel);
+    font-size: 10px;
+    padding: 6px 10px;
+    background: var(--lime);
+    border: 2px solid var(--ink);
+    box-shadow: inset 2px 2px 0 #c6ffb8, inset -2px -2px 0 #1d8a0a;
+    cursor: pointer;
+  }
+  .tray { margin-left: auto; padding: 6px 8px; border: 2px solid var(--bevel-lo); box-shadow: inset 2px 2px 0 var(--bevel-lo); background: #efe6ff; white-space: nowrap; }
+  .task { padding: 6px 8px; border: 2px solid var(--ink); background: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* ---------- Small screens ---------- */
+  @media (max-width: 820px) {
+    .desktop { grid-template-columns: minmax(0, 1fr); }
+    .log { height: 300px; }
+  }
+  @media (max-width: 480px) {
+    :root { --sprite: 3.5px; }
+    body { font-size: 18px; }
+    .room { padding-top: 84px; }
+    .poster { font-size: 7px; }
+    .bubble { font-size: 15px; }
+    .nameplate { font-size: 6px; }
+    .task { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .marquee span { animation: none; padding-left: 8px; }
+    .cat.typing .sprite, .cat.typing .laptop, .cat[aria-checked="true"] .arrow, .blink { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="banner">
+  <h1 class="logo">MEOWCHAT 2003<span class="blink">_</span></h1>
+  <div class="marquee" aria-hidden="true"><span>
+    ★ WELCOME 2 MEOWCHAT ★ 3 CATS ONLINE ★ 0 DOGS ALLOWED ★ please do not feed the hacker ★ lady meowington's lounge is VIP only ★ gary has been asleep since tuesday ★ sign our guestbook ★
+  </span></div>
+  <div class="badges" aria-hidden="true">
+    <span class="badge net">best viewed in Netscape 4 @ 800x600</span>
+    <span class="badge hot">you are visitor #<span id="visitor">0001337</span></span>
+    <span class="badge">powered by tuna</span>
+  </div>
+</header>
+
+<main class="desktop">
+
+  <!-- Lobby: the cats -->
+  <section class="window" aria-labelledby="lobby-title">
+    <div class="titlebar">
+      <span class="icon" aria-hidden="true"></span>
+      <span class="title" id="lobby-title">Lobby — The Cat Lounge</span>
+      <button class="winbtn" type="button" aria-label="Minimize" data-joke>_</button>
+      <button class="winbtn" type="button" aria-label="Maximize" data-joke>□</button>
+      <button class="winbtn" type="button" aria-label="Close" data-joke>×</button>
+    </div>
+    <div class="winbody">
+      <div class="room" id="room" role="radiogroup" aria-label="Pick a cat to talk to">
+        <div class="poster" aria-hidden="true">NO DOGS · NO REFUNDS</div>
+      </div>
+      <div class="roster" id="roster"></div>
+    </div>
+  </section>
+
+  <!-- Chat -->
+  <section class="window" aria-labelledby="chat-title">
+    <div class="titlebar">
+      <span class="icon" aria-hidden="true"></span>
+      <span class="title" id="chat-title">#meowchat</span>
+      <button class="winbtn" type="button" aria-label="Minimize" data-joke>_</button>
+      <button class="winbtn" type="button" aria-label="Maximize" data-joke>□</button>
+      <button class="winbtn" type="button" aria-label="Close" data-joke>×</button>
+    </div>
+    <div class="winbody">
+      <div class="log" id="log" role="log" aria-live="polite" aria-label="Chat log"></div>
+      <div class="status" id="status" aria-live="polite">&nbsp;</div>
+      <div class="to" id="to" role="radiogroup" aria-label="Send to">To:</div>
+      <form class="prompt" id="form" autocomplete="off">
+        <div class="field">
+          <label for="input">C:\MEOW&gt;</label>
+          <input id="input" type="text" maxlength="200" placeholder="type something to a cat..." autofocus>
+        </div>
+        <button class="send" type="submit">SEND</button>
+      </form>
+    </div>
+  </section>
+
+</main>
+
+<footer class="taskbar">
+  <button class="start" type="button" data-joke>Start</button>
+  <span class="task">#meowchat</span>
+  <span class="task">The Cat Lounge</span>
+  <span class="tray"><span id="clock">--:--</span></span>
+</footer>
+
+<script>
+(() => {
+  /* ================================================================
+     PIXEL SPRITES
+     Each sprite is a grid of characters; every char maps to a color.
+     "." is transparent. Cats share a base body and patch a few rows.
+     ================================================================ */
+  const BASE_CAT = [
+    "......................", //  0
+    "..K..............K....", //  1  ear tips
+    "..KOK..........KOK....", //  2
+    "..KPOK........KOPK....", //  3
+    "..KPOOKKKKKKKKOOPK....", //  4  top of head
+    ".KOOOOOOOOOOOOOOOOK...", //  5
+    ".KOOOOOOOOOOOOOOOOK...", //  6
+    ".KOOEEOOOOOOOOEEOOK...", //  7  eyes
+    ".KOOEXOOOOOOOOXEOOK...", //  8
+    "wKOOOOOOOPPOOOOOOOKw..", //  9  nose + whiskers
+    ".KOOOOOOOKKOOOOOOOK...", // 10
+    "wKOOOOOOKOOKOOOOOOKw..", // 11  mouth
+    "..KOOOOOOOOOOOOOOK....", // 12
+    "...KKOOOOOOOOOOKK...K.", // 13  neck + tail tip
+    "..KOOOOWWWWWWOOOOK.KOK", // 14  chest
+    ".KOOOOWWWWWWWWOOOOKKOK", // 15
+    ".KOOOOWWWWWWWWOOOOKKOK", // 16
+    ".KOOOOOWWWWWWOOOOOOOK.", // 17
+    ".KOOOOOOOOOOOOOOOOOK..", // 18
+    "..KWWKKKKKKKKKKWWK....", // 19  paws
+    "...KK..........KK.....", // 20
+  ];
+
+  const LAPTOP = [
+    "KKKKKKKKKKKKKK",
+    "KLLLLLLLLLLLLK",
+    "KLLLLFFLLFLLLK", // a fish logo, obviously
+    "KLLLFFFFFFLLLK",
+    "KLLLLFFLLFLLLK",
+    "KLLLLLLLLLLLLK",
+    "KKKKKKKKKKKKKK",
+    ".KDDDDDDDDDDK.",
+    ".KKKKKKKKKKKK.",
+  ];
+
+  const patch = (rows, changes) => rows.map((r, i) => changes[i] ?? r);
+
+  function svg(rows, pal, cls) {
+    const h = rows.length;
+    const w = Math.max(...rows.map(r => r.length));
+    let rects = "";
+    rows.forEach((row, y) => {
+      [...row].forEach((ch, x) => {
+        if (pal[ch]) rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${pal[ch]}"/>`;
+      });
+    });
+    return `<svg class="${cls}" viewBox="0 0 ${w} ${h}" shape-rendering="crispEdges" aria-hidden="true">${rects}</svg>`;
+  }
+
+  /* ================================================================
+     THE CATS
+     lines    – the general pool, drawn at random without repeats
+     triggers – keyword pools; used ~70% of the time when they match
+     {word}   – replaced with a random word from your message
+     ================================================================ */
+  const CATS = [
+    {
+      id: "byte",
+      name: "BYTE.EXE",
+      short: "BYTE",
+      color: "#ff9f1c",
+      bio: "Hacker. Paranoid. Still on dial-up. Trusts no red dot.",
+      pal: { K: "#1a1030", O: "#ff9f1c", S: "#d9700a", W: "#fff3dd", P: "#ff8fb8", E: "#fff", X: "#1a1030", w: "#ffffff", G: "#151515", g: "#39ff14" },
+      lid: "#2b2b3b",
+      sprite: patch(BASE_CAT, {
+        5: ".KOOOOSOSSOSOOOOOOK...",
+        6: ".KOOOOOSOOSOOOOOOOK...",
+        7: ".KOGGGGGKKKKGGGGGOK...", // shades on, always
+        8: ".KOGgGGGOOOOGgGGGOK...",
+      }),
+      greet: "*** connection established. a/s/l? i'm 4/cat/ur keyboard",
+      lines: [
+        "hold on, someone picked up the phone. *EEEEE-KSSSHHH* ok go",
+        "i hacked the fridge. it's mostly mustard. we've been lied to.",
+        "'{word}'? that's exactly what the Dog Government wants you to type.",
+        "my uptime is 14 naps. personal record.",
+        "i don't trust the red dot. it moves when i move. coincidence? no.",
+        "downloading more RAM... 3%... 3%... 3%... ok it's a sock now",
+        "brb, knocking a 56k modem off the desk for science",
+        "my password is ********. it's 'tuna' but with stars because i'm secure",
+        "error 404: treat not found. insert treat and press any paw",
+        "i've seen the source code of the universe. it's 90% box.",
+        "the cursor keeps blinking at me. either it's flirting or it's morse code. both bad.",
+        "ran a traceroute on your message. it went through 3 routers and a hairball.",
+        "lol. that's lowercase for 'licking own leg'.",
+        "i'm not paranoid. the vacuum is. it's always running.",
+        "sudo give me the warm laundry",
+        "i've backed up '{word}' to a floppy. the floppy is under the couch. forever.",
+        "my firewall is a real wall. i sit on it. nothing gets through.",
+        "every time you type, a server in finland purrs. i don't make the rules.",
+      ],
+      triggers: [
+        { re: /\b(hi|hello|hey|yo|sup|hai|hiya|howdy)\b/i, lines: [
+          "hey. are you a cop. you have to tell me if you're a cop.",
+          "hi. i've already cracked your firewall. it was a cardboard box. nice.",
+          "a/s/l? jk i know where you are. you're at your computer. creepy right",
+        ]},
+        { re: /(food|hungry|eat|tuna|treat|snack|fish|dinner|breakfast|lunch)/i, lines: [
+          "food.exe has stopped responding. refill bowl and restart.",
+          "i encrypted my treat stash. the key was also a treat. i ate the key.",
+          "tuna is just ocean data. i'm a data guy.",
+        ]},
+        { re: /(dog|puppy|pupper|woof|bark)/i, lines: [
+          "dogs still use IE6. that's how i know they can't be trusted.",
+          "a dog? on THIS network? *chews through ethernet cable*",
+        ]},
+        { re: /(computer|code|hack|bug|program|internet|wifi|password|virus|pc)/i, lines: [
+          "have you tried turning the human off and on again",
+          "i wrote a virus once. it just knocks pens off desks. very effective.",
+          "my code has no bugs. i ate them all. crunchy.",
+        ]},
+        { re: /\?\s*$/, lines: [
+          "the answer is in the mainframe. the mainframe is under the couch.",
+          "can't say. they're listening. (the roomba)",
+          "yes. no. 404. pick one, i'm busy hacking the thermostat",
+        ]},
+      ],
+    },
+    {
+      id: "lady",
+      name: "LADY MEOWINGTON",
+      short: "LADY M",
+      color: "#ff6fc0",
+      bio: "Lobby diva. Owns 40 rare furnis. Sleeps in the box they came in.",
+      pal: { K: "#1a1030", O: "#fff3f8", W: "#ffffff", P: "#ff8fb8", E: "#5ad1ff", X: "#1a1030", w: "#c9b8d9", A: "#ff2e88", N: "#ffd1e8" },
+      lid: "#ff6fc0",
+      sprite: patch(BASE_CAT, {
+        0: ".AA.AA................", // a bow. naturally.
+        1: ".AAAAA...........K....",
+        6: ".KOOKOKOOOOOOKOKOOK...", // lashes
+        13: "...KKNONONONONOKK...K.", // pearls
+      }),
+      greet: "*glides across the lobby* Charmed, I'm sure. Do wipe your paws.",
+      lines: [
+        "Darling. Darling. Daaaarling. Anyway, no.",
+        "I'd respond properly, but my rare throne-furni is being polished.",
+        "I traded three pixel sofas and my dignity for this lounge. Worth it.",
+        "Oh, '{word}'. How terribly common. I adore it.",
+        "Bring me water. Not THAT water. The same water, but in a different glass.",
+        "I was not knocked off anything. I simply chose the floor.",
+        "You may address me as Lady, Your Floofiness, or Floor Monarch.",
+        "I went to a pool party in 2004. I didn't swim. I stared at the pool until it apologized.",
+        "Ugh, the lighting in here is SO 256-color.",
+        "You may pet me exactly once. Starting... no. Changed my mind.",
+        "Fetch me a cardboard box from Paris. The French ones are crunchier.",
+        "My bed cost 40 credits. I sleep next to it, in the box it came in.",
+        "Hush. I'm writing a sonnet about the sunbeam. Line one: 'warm.' Line two: 'mine.'",
+        "Your message has been received by my secretary, who is also me, but in a smaller hat.",
+        "'{word}'... I shall have that embroidered on a cushion and then ignore the cushion.",
+        "I don't chase lasers, darling. Lasers come to ME.",
+      ],
+      triggers: [
+        { re: /\b(hi|hello|hey|yo|sup|hai|hiya|howdy)\b/i, lines: [
+          "Charmed, I'm sure. Bow at a 45° angle, darling.",
+          "Oh! A visitor. Mind the carpet, it's a rare.",
+          "Hello, hello. You may kiss the air near my paw.",
+        ]},
+        { re: /(food|hungry|eat|tuna|treat|snack|fish|dinner|breakfast|lunch)/i, lines: [
+          "I only dine on things arranged in the shape of a tiny pixel heart.",
+          "Caviar? Pfft. Bring me the crunchy dust at the bottom of the bag. The DUST, darling.",
+          "I'm on a strict diet of whatever you're eating right now.",
+        ]},
+        { re: /(dog|puppy|pupper|woof|bark)/i, lines: [
+          "A dog? In MY lounge? Call security. Security is also a cat. He's asleep.",
+          "Dogs are simply cats who failed charm school.",
+        ]},
+        { re: /(love|cute|pretty|beautiful|gorgeous|adorable|queen)/i, lines: [
+          "I know, darling. I KNOW. Say it again, slower.",
+          "Flattery accepted. Please resubmit in writing, with glitter.",
+        ]},
+        { re: /\?\s*$/, lines: [
+          "What an impertinent question. The answer is yes, obviously. Now give me that.",
+          "Ask my secretary. She's also me, but in a smaller hat.",
+        ]},
+      ],
+    },
+    {
+      id: "gary",
+      name: "ZEN GARY",
+      short: "GARY",
+      color: "#7fe08a",
+      bio: "Office cat. Philosopher. Has been 'defragmenting' since Tuesday.",
+      pal: { K: "#1a1030", O: "#9aa3b8", W: "#e8ecf5", P: "#ff8fb8", E: "#e8ecf5", X: "#1a1030", w: "#ffffff", L: "#3ccf4e", l: "#1f8a32" },
+      lid: "#3c8f62",
+      sprite: patch(BASE_CAT, {
+        0: "........LL............", // a sprout. he's growing.
+        1: "..K.....LLl......K....",
+        2: "..KOK.....l....KOK....",
+        3: "..KPOK....l...KOPK....",
+        7: ".KOOOOOOOOOOOOOOOOK...", // eyes: closed. always.
+        8: ".KOOKKKOOOOOOKKKOOK...",
+      }),
+      greet: "heyyy. welcome to the present moment. it's carpeted.",
+      lines: [
+        "dude... what if the box is thinking inside of us",
+        "i've been staring at this wall for 4 hours. we're friends now.",
+        "'{word}', huh. heavy. let's lie down on that for a bit.",
+        "the dot... it was never red. we were red. all along.",
+        "not all who wander are lost. some are looking for the warm spot on the router.",
+        "my boss asked for the report. i sat on the keyboard. it's in there somewhere.",
+        "you can't knock the glass off the table if you ARE the table. *exhales*",
+        "breathe in... *smells tuna*... breathe out... *still smells tuna*",
+        "napping isn't lazy, man. it's defragmenting.",
+        "every meow is a tiny haiku. most of them say 'food.' that's ok.",
+        "be the water bowl. accept what fills you.",
+        "i tried mindfulness once. then a moth happened.",
+        "time is a flat circle. like a cat bed. ...hang on. time is a cat bed.",
+        "zzz... oh, hey. i was meditating. with my eyes closed. and snoring.",
+        "there is no 9-to-5. there's only 5pm somewhere, and also nap.",
+        "'{word}'... i'm gonna think about that for a while. *closes eyes for 3 hours*",
+      ],
+      triggers: [
+        { re: /\b(hi|hello|hey|yo|sup|hai|hiya|howdy)\b/i, lines: [
+          "oh hi... i was just here. being here. you know how it is.",
+          "*slow blink* that means hello in cat. also 'i see your soul'. mostly hello.",
+        ]},
+        { re: /(food|hungry|eat|tuna|treat|snack|fish|dinner|breakfast|lunch)/i, lines: [
+          "hunger is just the universe asking you to open a can, man.",
+          "i ate breakfast. then i ate breakfast again. time is weird.",
+          "the bowl is half empty. the bowl is half full. the bowl is, like, a bowl.",
+        ]},
+        { re: /(dog|puppy|pupper|woof|bark)/i, lines: [
+          "dogs are just cats who chose enthusiasm. respect.",
+          "the dog barks. the cloud passes. i keep napping. this is the way.",
+        ]},
+        { re: /(sad|tired|stress|anxious|bored|lonely|help|ugh|work)/i, lines: [
+          "hey. stretch your arms, drink some water, look out a real window for a sec. the screen'll still be here.",
+          "you know what fixes that? ten minutes in a sunbeam. it's free. no login required.",
+          "be like a cat: go knock something small off a table. (a sock. not a vase.)",
+        ]},
+        { re: /\?\s*$/, lines: [
+          "the answer is... *falls asleep mid-sentence*",
+          "dude. what if the question is the answer. what if i'm hungry.",
+          "mm. ask the sunbeam. it knows things.",
+        ]},
+      ],
+    },
+  ];
+
+  /* ================================================================
+     REPLY PICKER – shuffle bags so you don't get the same line twice
+     ================================================================ */
+  function draw(pool) {
+    if (!pool._bag || pool._bag.length === 0) {
+      const bag = [...pool.lines];
+      for (let i = bag.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [bag[i], bag[j]] = [bag[j], bag[i]];
+      }
+      if (bag.length > 1 && bag[bag.length - 1] === pool._last) bag.unshift(bag.pop());
+      pool._bag = bag;
+    }
+    pool._last = pool._bag.pop();
+    return pool._last;
+  }
+
+  function reply(cat, msg) {
+    const trigger = cat.triggers.find(t => t.re.test(msg));
+    const pool = trigger && Math.random() < 0.7 ? trigger : cat;
+    const words = msg.match(/[\p{L}\p{N}']{3,}/gu) || [];
+    const word = words.length ? words[Math.floor(Math.random() * words.length)].toLowerCase() : "that";
+    return draw(pool).replaceAll("{word}", word);
+  }
+
+  /* ================================================================
+     DOM
+     ================================================================ */
+  const $ = id => document.getElementById(id);
+  const room = $("room"), roster = $("roster"), to = $("to"), log = $("log");
+  const status = $("status"), form = $("form"), input = $("input"), title = $("chat-title");
+
+  let selected = CATS[0];
+
+  CATS.forEach(cat => {
+    cat.pending = 0;
+
+    // cat in the room
+    const el = document.createElement("button");
+    el.type = "button";
+    el.className = "cat";
+    el.setAttribute("role", "radio");
+    el.style.setProperty("--cat-color", cat.color);
+    el.innerHTML = `
+      <span class="arrow" aria-hidden="true"></span>
+      <span class="bubble" aria-hidden="true"></span>
+      <span class="rig">
+        ${svg(cat.sprite, cat.pal, "sprite")}
+        ${svg(LAPTOP, { K: "#1a1030", L: cat.lid, F: "#ffffff", D: "#c9c3d6" }, "laptop")}
+      </span>
+      <span class="shadow" aria-hidden="true"></span>
+      <span class="nameplate"></span>`;
+    el.querySelector(".nameplate").textContent = cat.name;
+    el.setAttribute("aria-label", `Talk to ${cat.name}`);
+    el.addEventListener("click", () => select(cat, true));
+    room.appendChild(el);
+    cat.el = el;
+    cat.bubble = el.querySelector(".bubble");
+
+    // bio line
+    const p = document.createElement("p");
+    p.style.setProperty("--cat-color", cat.color);
+    p.innerHTML = "<b></b><span></span>";
+    p.querySelector("b").textContent = cat.name;
+    p.querySelector("span").textContent = cat.bio;
+    roster.appendChild(p);
+
+    // "To:" chip
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "chip";
+    chip.setAttribute("role", "radio");
+    chip.style.setProperty("--cat-color", cat.color);
+    chip.textContent = cat.short;
+    chip.addEventListener("click", () => select(cat, true));
+    to.appendChild(chip);
+    cat.chip = chip;
+  });
+
+  function select(cat, focusInput) {
+    selected = cat;
+    CATS.forEach(c => {
+      const on = String(c === cat);
+      c.el.setAttribute("aria-checked", on);
+      c.chip.setAttribute("aria-checked", on);
+      c.el.tabIndex = c.chip.tabIndex = c === cat ? 0 : -1;
+    });
+    title.textContent = `#meowchat — whispering to ${cat.name}`;
+    input.placeholder = `say something to ${cat.name}...`;
+    if (focusInput) input.focus();
+  }
+
+  // arrow keys move between cats inside either radiogroup
+  [room, to].forEach(group => group.addEventListener("keydown", e => {
+    const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+    if (!step) return;
+    e.preventDefault();
+    const next = CATS[(CATS.indexOf(selected) + step + CATS.length) % CATS.length];
+    select(next, false);
+    (group === room ? next.el : next.chip).focus();
+  }));
+
+  /* ---------- chat log ---------- */
+  const clock = () => new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  function addLine({ nick, text, color, kind }) {
+    const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
+    const line = document.createElement("p");
+    line.className = "msg" + (kind ? " " + kind : "");
+    const t = document.createElement("span");
+    t.className = "time";
+    t.textContent = `[${clock()}] `;
+    line.appendChild(t);
+    if (nick) {
+      const n = document.createElement("span");
+      n.className = "nick";
+      n.textContent = `<${nick}> `;
+      if (color) n.style.color = color;
+      line.appendChild(n);
+    }
+    line.appendChild(document.createTextNode(text));
+    log.appendChild(line);
+    if (atBottom || kind === "you") log.scrollTop = log.scrollHeight;
+  }
+
+  const sys = text => addLine({ text: "*** " + text, kind: "sys" });
+
+  /* ---------- typing + speech ---------- */
+  function updateStatus() {
+    const typing = CATS.filter(c => c.pending > 0);
+    status.textContent = "";
+    if (!typing.length) { status.innerHTML = "&nbsp;"; return; }
+    const names = typing.map(c => c.name);
+    const who = names.length === 1 ? names[0] : names.slice(0, -1).join(", ") + " & " + names.at(-1);
+    status.append(`${who} ${names.length === 1 ? "is" : "are"} typing`);
+    const cur = document.createElement("span");
+    cur.className = "blink";
+    cur.textContent = "▌";
+    status.append(" ", cur);
+  }
+
+  function speak(cat, text) {
+    cat.bubble.textContent = "";
+    const b = document.createElement("b");
+    b.textContent = cat.short + ": ";
+    const says = document.createElement("span");
+    says.append(b, text);
+    cat.bubble.append(says);
+    cat.bubble.classList.add("show");
+    clearTimeout(cat.bubbleTimer);
+    cat.bubbleTimer = setTimeout(() => cat.bubble.classList.remove("show"), 5500);
+  }
+
+  function catSays(cat, text, extraDelay = 0) {
+    // typing time scales with reply length, plus a little "thinking" jitter
+    const delay = Math.min(3400, 600 + text.length * 22 + Math.random() * 800) + extraDelay;
+    setTimeout(() => {
+      cat.pending++;
+      cat.el.classList.add("typing");
+      updateStatus();
+    }, extraDelay);
+    setTimeout(() => {
+      cat.pending--;
+      if (cat.pending === 0) cat.el.classList.remove("typing");
+      updateStatus();
+      addLine({ nick: cat.name, text, color: cat.color });
+      speak(cat, text);
+    }, delay);
+  }
+
+  /* ---------- sending ---------- */
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    const msg = input.value.trim();
+    if (!msg) {
+      form.classList.remove("shake");
+      void form.offsetWidth; // restart animation
+      form.classList.add("shake");
+      return;
+    }
+    input.value = "";
+    addLine({ nick: `you → ${selected.name}`, text: msg, kind: "you" });
+    catSays(selected, reply(selected, msg), 250);
+  });
+
+  /* ---------- little jokes ---------- */
+  const jokes = [
+    "nice try. cats cannot be closed.",
+    "this window is load-bearing. a cat is sleeping on it.",
+    "access denied by BYTE.EXE",
+    "LADY MEOWINGTON has requested this window stay exactly where it is.",
+    "ZEN GARY says: the window is already minimized, in a spiritual sense.",
+  ];
+  document.querySelectorAll("[data-joke]").forEach(btn =>
+    btn.addEventListener("click", () => sys(jokes[Math.floor(Math.random() * jokes.length)]))
+  );
+
+  /* ---------- tray clock + visitor counter ---------- */
+  const tick = () => { $("clock").textContent = clock(); };
+  tick();
+  setInterval(tick, 10000);
+  $("visitor").textContent = String(1000000 + Math.floor(Math.random() * 999999)).slice(1);
+
+  /* ---------- boot ---------- */
+  select(CATS[0], false);
+  sys("you have joined #meowchat");
+  sys(`${CATS.map(c => c.name).join(", ")} are here`);
+  sys("click a cat (or a To: chip), type a message, hit SEND");
+  CATS.forEach((cat, i) => catSays(cat, cat.greet, 500 + i * 1300));
+})();
+</script>
+</body>
+</html>
