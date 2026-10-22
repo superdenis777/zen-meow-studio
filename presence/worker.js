@@ -8,7 +8,7 @@
 // forgets them when Cloudflare puts it to sleep. The room id is a hash made by the page; the
 // Worker never sees names or places.
 const ROOM = /^[0-9a-f]{32}$/;
-const FRESH = 40_000;
+const FRESH = 150_000; // background tabs check in only about once a minute
 const CORS = {
   "access-control-allow-origin": "*",
   "access-control-allow-methods": "GET, POST, OPTIONS",
