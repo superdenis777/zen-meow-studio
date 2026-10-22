@@ -14,6 +14,7 @@ The owner is Denis. He wants changes shipped end to end, explained plainly, with
 | `audio.js` | `window.MeowAudio`: procedural Web Audio (SFX, rain, vinyl, purr, Meowbeats music). No audio files. |
 | `worker/worker.js` | Cloudflare Worker `zen-meow-api`: `POST {prompt, cat, history, lang, layer}` → `{reply}`; `GET` = health check. |
 | `worker/wrangler.toml` | Worker config, including `[placement] region = "gcp:us-central1"` (see gotchas). |
+| `presence/` | Cloudflare Worker `hotel-dada-presence` for the separate Hotel Dada room (`superdenis777/the-room`): `POST {room, side, leave?}` → `{a, b}`, who checked in during the last 40 s. A Durable Object per room, memory only. Deployed by `.github/workflows/deploy-presence.yml`. |
 | `scripts/stamp.mjs` | Cache-busting `?v=hash` on the `<script>` tags in `index.html`. |
 | `tests/` | `content` (fast), `worker` (fast), `e2e` (Playwright). `helpers.mjs` runs the real Worker + site locally with Google faked. |
 
